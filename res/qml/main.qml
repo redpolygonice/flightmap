@@ -1,15 +1,51 @@
 import QtQuick 2.12
-import QtQuick.Controls 2.5
+import QtQuick.Controls 2.15
+import QtQuick.Layouts 1.15
 import QtLocation 5.6
 import QtPositioning 5.6
 
 ApplicationWindow {
-	width: 800
-	height: 600
+	width: 1200
+	height: 800
 	x: screen.width / 2 - width / 2
 	y: screen.height / 2 - height / 2
 	visible: true
 	title: qsTr("Flight Map")
+
+	menuBar: MenuBar {
+		Menu {
+			title: qsTr("&File")
+			Action { text: qsTr("&New...") }
+			Action { text: qsTr("&Open...") }
+			Action { text: qsTr("&Save") }
+			Action { text: qsTr("Save &As...") }
+			MenuSeparator { }
+			Action { text: qsTr("&Quit") }
+		}
+		Menu {
+			title: qsTr("&Edit")
+			Action { text: qsTr("Cu&t") }
+			Action { text: qsTr("&Copy") }
+			Action { text: qsTr("&Paste") }
+		}
+		Menu {
+			title: qsTr("&Help")
+			Action { text: qsTr("&About") }
+		}
+	}
+
+	header: ToolBar {
+		RowLayout {
+			ToolButton {
+				text: qsTr("1")
+				onClicked: menu.open()
+			}
+			ToolButton {
+				text: qsTr("2")
+				onClicked: menu.open()
+			}
+		}
+	}
 
 	Plugin {
 		id: mapPlugin
