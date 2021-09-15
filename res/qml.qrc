@@ -4,5 +4,13 @@
         <file>qml/qtquickcontrols2.conf</file>
         <file>img/green-marker.png</file>
         <file>img/green-pin.png</file>
+        <file>img/connect.png</file>
+        <file>img/disconnect.png</file>
+        <file>img/group.png</file>
+        <file>img/joystick.png</file>
+        <file>img/microphone.png</file>
+        <file>img/polygon.png</file>
+        <file>img/quadro.png</file>
+        <file>img/speaker.png</file>
     </qresource>
 </RCC>

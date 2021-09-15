@@ -1,5 +1,6 @@
 import QtQuick 2.12
 import QtQuick.Controls 2.15
+import QtQuick.Controls.Styles 1.4
 import QtQuick.Layouts 1.15
 import QtLocation 5.6
 import QtPositioning 5.6
@@ -12,38 +13,30 @@ ApplicationWindow {
 	visible: true
 	title: qsTr("Flight Map")
 
-	menuBar: MenuBar {
-		Menu {
-			title: qsTr("&File")
-			Action { text: qsTr("&New...") }
-			Action { text: qsTr("&Open...") }
-			Action { text: qsTr("&Save") }
-			Action { text: qsTr("Save &As...") }
-			MenuSeparator { }
-			Action { text: qsTr("&Quit") }
-		}
-		Menu {
-			title: qsTr("&Edit")
-			Action { text: qsTr("Cu&t") }
-			Action { text: qsTr("&Copy") }
-			Action { text: qsTr("&Paste") }
-		}
-		Menu {
-			title: qsTr("&Help")
-			Action { text: qsTr("&About") }
-		}
-	}
-
 	header: ToolBar {
+		width: parent.width
+		height: 36
 		RowLayout {
+			spacing: 1
 			ToolButton {
-				text: qsTr("1")
-				onClicked: menu.open()
+				Layout.preferredHeight: 30
+				Layout.preferredWidth: 30
+				icon.source: "qrc:/img/connect.png"
+				ToolTip.visible: hovered
+				ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
+				ToolTip.text: qsTr("Connect ..")
+				onClicked: connect()
 			}
 			ToolButton {
-				text: qsTr("2")
-				onClicked: menu.open()
+				Layout.preferredHeight: 30
+				Layout.preferredWidth: 30
+				icon.source: "qrc:/img/disconnect.png"
+				ToolTip.visible: hovered
+				ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
+				ToolTip.text: qsTr("Disconnect")
+				onClicked: disconnect()
 			}
+			ToolSeparator {}
 		}
 	}
 
@@ -97,5 +90,13 @@ ApplicationWindow {
 		item.anchorPoint.y = item.sourceItem.height
 		mapId.addMapItem(item);
 		polygon.addCoordinate(item.coordinate)
+	}
+
+	function connect()
+	{
+	}
+
+	function disconnect()
+	{
 	}
 }
