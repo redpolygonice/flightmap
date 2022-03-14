@@ -12,5 +12,25 @@
         <file>img/polygon.png</file>
         <file>img/quadro.png</file>
         <file>img/speaker.png</file>
+        <file>qml/ConnectDlg.qml</file>
+        <file>qml/TelemetryWidget.qml</file>
+        <file>img/telemetry.png</file>
+        <file>img/hud.png</file>
+        <file>img/options.png</file>
+        <file>qml/LogWindow.qml</file>
+        <file>img/mission.png</file>
+        <file>qml/PanelButton.qml</file>
+        <file>img/camera.png</file>
+        <file>qml/LocationWidget.qml</file>
+        <file>qml/MapsDlg.qml</file>
+        <file>img/map.png</file>
+        <file>qml/MapComponent.qml</file>
+        <file>img/home.png</file>
+        <file>qml/ControlWidget.qml</file>
+        <file>qml/HudWidget.qml</file>
+        <file>qml/MissionWidget.qml</file>
+        <file>qml/ToggleButton.qml</file>
+        <file>qml/CheckButton.qml</file>
+        <file>qml/SpinButton.qml</file>
     </qresource>
 </RCC>
