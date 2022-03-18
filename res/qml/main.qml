@@ -54,7 +54,7 @@ ApplicationWindow {
 		missionParams = { "visible": map.missionWidget.visible, "x":  map.missionWidget.x, "y": map.missionWidget.y }
 		proxy.saveParameters({ "windowX": x, "windowY": y, "windowW": width, "windowH": height, "windowV": visibility,
 							"mapZoom": map.zoomLevel, "mapLat": map.center.latitude, "mapLon": map.center.longitude,
-							"mapTilt": map.tilt, "mapBear": map.bearing, "mapFov": map.fov, "telemetryWidget": telemetryParams,
+							"mapTilt": map.tilt, "mapBear": map.bearing, "mapFov": map.fieldOfView, "telemetryWidget": telemetryParams,
 							 "hudWidget": hudParams, "controlWidget": controlParams, "missionWidget": missionParams})
 	}
 
@@ -62,8 +62,8 @@ ApplicationWindow {
 		id: connectDlg
 	}
 
-	MapsDlg {
-		id: mapsDlg
+	MapDlg {
+		id: mapDlg
 	}
 
 	header: ToolBar {
@@ -190,6 +190,13 @@ ApplicationWindow {
 			SplitView.minimumHeight: 100
 			height: mainWindow.contentItem.height - logWindow.height
 
+			MapSliders {
+				id: sliders
+				z: map.z + 3
+				mapSource: map
+				edge: Qt.LeftEdge
+			}
+
 			Component {
 				id: mapComponent
 				MapComponent { }
@@ -290,7 +297,7 @@ ApplicationWindow {
 
 	function selectMap()
 	{
-		mapsDlg.open()
+		mapDlg.open()
 	}
 
 	function goHome()

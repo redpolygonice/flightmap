@@ -2,25 +2,23 @@
 #define CONNECTION_H
 
 #include "common/types.h"
-#include "devices/idevice.h"
+#include "idevice.h"
 #include "comms/icommunication.h"
 
-namespace data
+namespace device
 {
 
 class Connection;
 typedef std::shared_ptr<Connection> ConnectionPtr;
 
-class ConnectionList;
-typedef std::shared_ptr<ConnectionList> ConnectionListPtr;
-typedef std::vector<ConnectionPtr> ConnectionDataList;
+typedef std::vector<ConnectionPtr> ConnectionList;
 typedef std::vector<ConnectionPtr>::iterator ConnectionListIterator;
 typedef std::vector<ConnectionPtr>::const_iterator ConnectionListConstIterator;
 
 // Connection object
 class Connection
 {
-	friend class ConnectionList;
+	friend class ConnectionManager;
 
 private:
 	device::DevicePtr _device;
@@ -37,29 +35,6 @@ public:
 	device::DevicePtr device() const { return _device; }
 	int number() const { return _number; }
 	bool isActive() const { return _active; }
-};
-
-// Connection list object
-class ConnectionList
-{
-private:
-	ConnectionDataList _data;
-
-public:
-	ConnectionList() {}
-	~ConnectionList() {}
-
-public:
-	static ConnectionListPtr create() { return std::make_shared<ConnectionList>(); }
-	ConnectionPtr active() const;
-	void setActive(int number);
-	void add(const device::DevicePtr &device);
-	void remove(const device::DevicePtr &device);
-	void remove(int number);
-	void removeActive();
-	void removeAll();
-	ConnectionPtr findByNumber(int number) const;
-	device::DevicePtr findDeviceByNumber(int number) const;
 };
 
 }

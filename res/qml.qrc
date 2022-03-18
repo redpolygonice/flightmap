@@ -22,7 +22,6 @@
         <file>qml/PanelButton.qml</file>
         <file>img/camera.png</file>
         <file>qml/LocationWidget.qml</file>
-        <file>qml/MapsDlg.qml</file>
         <file>img/map.png</file>
         <file>qml/MapComponent.qml</file>
         <file>img/home.png</file>
@@ -32,5 +31,8 @@
         <file>qml/ToggleButton.qml</file>
         <file>qml/CheckButton.qml</file>
         <file>qml/SpinButton.qml</file>
+        <file>qml/SimpleButton.qml</file>
+        <file>qml/MapSliders.qml</file>
+        <file>qml/MapDlg.qml</file>
     </qresource>
 </RCC>

@@ -10,6 +10,7 @@ Map {
 
 	property variant homePoint: null
 	property bool isMission: false
+	property bool isPolygon: true
 	property variant quadro: null
 	property alias telemetryWidget: telemetryWidgetId;
 	property alias hudWidget: hudWidgetId;
@@ -67,8 +68,14 @@ Map {
 
 	MapPolygon {
 		id: polygon
-		border.width: 2
-		border.color: "red"
+		border.width: 3
+		border.color: 'red'
+	}
+
+	MapPolyline {
+		id: lines
+		line.width: 3
+		line.color: 'red'
 	}
 
 	MapQuickItem {
@@ -84,6 +91,9 @@ Map {
 	MouseArea {
 		anchors.fill: parent
 		hoverEnabled: true
+		cursorShape: {
+			isMission ? Qt.CrossCursor : Qt.ArrowCursor
+		}
 		onPressed: {
 			if (mapId.isMission)
 				addMarker(mouse.x, mouse.y)
@@ -104,8 +114,12 @@ Map {
 		item.coordinate = mapId.toCoordinate(Qt.point(x, y))
 		item.anchorPoint.x = item.sourceItem.width / 2
 		item.anchorPoint.y = item.sourceItem.height
-		mapId.addMapItem(item);
-		polygon.addCoordinate(item.coordinate)
+		mapId.addMapItem(item)
+
+		if (isPolygon)
+			polygon.addCoordinate(item.coordinate)
+		else
+			lines.addCoordinate(item.coordinate)
 	}
 
 	function addQuadro(lat, lon)
@@ -120,62 +134,70 @@ Map {
 		quadro.coordinate = QtPositioning.coordinate(lat, lon)
 		quadro.anchorPoint.x = quadro.sourceItem.width / 2
 		quadro.anchorPoint.y = quadro.sourceItem.height
-		mapId.addMapItem(quadro);
+		mapId.addMapItem(quadro)
+	}
+
+	function showHideWidget(widget, button)
+	{
+		if (widget.visible)
+		{
+			widget.visible = false
+			button.checked = false
+		}
+		else
+		{
+			widget.visible = true
+			button.checked = true
+		}
 	}
 
 	function showTelemetry()
 	{
-		if (telemetryWidget.visible)
-		{
-			telemetryWidget.visible = false
-			telemetryButton.checked = false
-		}
-		else
-		{
-			telemetryWidget.visible = true
-			telemetryButton.checked = true
-		}
+		showHideWidget(telemetryWidget, telemetryButton)
 	}
 
 	function showControl()
 	{
-		if (controlWidget.visible)
-		{
-			controlWidget.visible = false
-			controlButton.checked = false
-		}
-		else
-		{
-			controlWidget.visible = true
-			controlButton.checked = true
-		}
+		showHideWidget(controlWidget, controlButton)
 	}
 
 	function showHud()
 	{
-		if (hudWidget.visible)
-		{
-			hudWidget.visible = false
-			hudButton.checked = false
-		}
-		else
-		{
-			hudWidget.visible = true
-			hudButton.checked = true
-		}
+		showHideWidget(hudWidget, hudButton)
 	}
 
 	function showMission()
 	{
-		if (missionWidget.visible)
-		{
-			missionWidget.visible = false
-			missionButton.checked = false
+		showHideWidget(missionWidget, missionButton)
+	}
+
+	function clearAll()
+	{
+		var i = 0
+		while (i < mapItems.length) {
+			var item = mapItems[i]
+			if (item !== greenPin && item !== polygon && item !== lines)
+				removeMapItem(item)
+			else
+				i = i + 1
 		}
-		else
-		{
-			missionWidget.visible = true
-			missionButton.checked = true
+
+		while (lines.path.length > 0) {
+			lines.removeCoordinate(lines.path[0])
 		}
+
+		while (polygon.path.length > 0) {
+			polygon.removeCoordinate(polygon.path[0])
+		}
+	}
+
+	function createMission(isPolygon)
+	{
+
+	}
+
+	function clearMission()
+	{
+
 	}
 }

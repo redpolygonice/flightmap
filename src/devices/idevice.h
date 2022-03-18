@@ -4,6 +4,7 @@
 #include "common/types.h"
 #include "comms/icommunication.h"
 #include "data/telebox.h"
+#include "data/imission.h"
 #include "common/devicetypes.h"
 
 namespace device
@@ -15,10 +16,11 @@ class IDevice
 protected:
 	comms::CommunicationPtr _comm;
 	data::TeleBoxPtr _telebox;
+	data::MissionPtr _mission;
 	common::DeviceType _type;
 
 public:
-	IDevice(const comms::CommunicationPtr &comm) : _comm(comm) {}
+	IDevice(const comms::CommunicationPtr &comm) : _comm(comm), _mission(nullptr) {}
 	virtual ~IDevice() {}
 
 public:

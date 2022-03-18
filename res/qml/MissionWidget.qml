@@ -1,6 +1,7 @@
 import QtQuick 2.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Dialogs 1.1
 
 Rectangle {
 	id: control
@@ -10,6 +11,25 @@ Rectangle {
 	color: "#000000"
 	border.width: 2
 	border.color: "#ffffff"
+
+	property bool isMissionCreated: false
+
+	Component.onCompleted: {
+		if (drawModePoints.checked)
+			drawModePoints.clicked()
+		else
+			drawModePolygon.clicked()
+	}
+
+	MessageDialog {
+		id: messageDialog
+		visible: false
+		title: ""
+		text: ""
+		onAccepted: {
+			visible = false
+		}
+	}
 
 	MouseArea {
 		id: mouseArea
@@ -28,39 +48,40 @@ Rectangle {
 			height: 20
 			Layout.alignment: Qt.AlignHCenter
 
-			Button {
+			SimpleButton {
 				id: buttonStart
 				Layout.preferredWidth: 50
 				Layout.preferredHeight: 20
 				text: qsTr("Start")
-				font.pixelSize: 12
+				ToolTip.text: qsTr("Start mission")
 
 				onClicked: {
+					mapId.clearAll()
 					mapId.isMission = true
 				}
 			}
 
-			Button {
+			SimpleButton {
 				id: buttonStop
 				Layout.preferredWidth: 50
 				Layout.preferredHeight: 20
 				text: qsTr("Stop")
-				font.pixelSize: 12
+				ToolTip.text: qsTr("Stop mission")
 
 				onClicked: {
 					mapId.isMission = false
 				}
 			}
 
-			Button {
+			SimpleButton {
 				id: buttonClearAll
 				Layout.preferredWidth: 50
 				Layout.preferredHeight: 20
 				text: qsTr("Clear")
-				font.pixelSize: 12
+				ToolTip.text: qsTr("Clear all")
 
 				onClicked: {
-					mapId.clearMapItems()
+					mapId.clearAll()
 					mapId.isMission = false
 				}
 			}
@@ -96,19 +117,35 @@ Rectangle {
 					spacing: 3
 
 					ToggleButton {
-						id: drawModePolygon
+						id: drawModePoints
 						Layout.topMargin: 3
 						Layout.preferredWidth: parent.width
 						Layout.preferredHeight: 15
+						text: qsTr("Points")
 						checked: true
-						text: qsTr("Polygon")
+						onClicked: {
+							mapId.isPolygon = false
+							horizStepCheck.enabled = false
+							horizStepValue.enabled = false
+							vertStepCheck.enabled = false
+							vertStepValue.enabled = false
+						}
 					}
+
 					ToggleButton {
-						id: drawModePoints
+						id: drawModePolygon
 						Layout.preferredWidth: parent.width
 						Layout.preferredHeight: 15
-						text: qsTr("Points")
+						text: qsTr("Polygon")
+						onClicked: {
+							mapId.isPolygon = true
+							horizStepCheck.enabled = true
+							horizStepValue.enabled = true
+							vertStepCheck.enabled = true
+							vertStepValue.enabled = true
+						}
 					}
+
 					Rectangle {
 						Layout.fillHeight: true
 					}
@@ -273,20 +310,28 @@ Rectangle {
 						height: 20
 						Layout.alignment: Qt.AlignHCenter
 
-						Button {
+						SimpleButton {
 							id: buttonCreate
 							Layout.preferredWidth: 70
 							Layout.preferredHeight: 20
 							text: qsTr("Create")
-							font.pixelSize: 12
+							ToolTip.text: qsTr("Create mission points")
+
+							onClicked: {
+								mapId.createMission(drawModePolygon.checked)
+							}
 						}
 
-						Button {
+						SimpleButton {
 							id: buttonClear
 							Layout.preferredWidth: 70
 							Layout.preferredHeight: 20
 							text: qsTr("Clear")
-							font.pixelSize: 12
+							ToolTip.text: qsTr("Clear mission points")
+
+							onClicked: {
+								mapId.clearMission()
+							}
 						}
 					}
 
@@ -333,20 +378,28 @@ Rectangle {
 						height: 20
 						Layout.alignment: Qt.AlignHCenter
 
-						Button {
+						SimpleButton {
 							id: buttonRestore
 							Layout.preferredWidth: 70
 							Layout.preferredHeight: 20
 							text: qsTr("Restore")
-							font.pixelSize: 12
+							ToolTip.text: qsTr("Restore mission from device")
 						}
 
-						Button {
+						SimpleButton {
 							id: buttonWrite
 							Layout.preferredWidth: 70
 							Layout.preferredHeight: 20
 							text: qsTr("Write")
-							font.pixelSize: 12
+							ToolTip.text: qsTr("Write mission to device")
+
+							onClicked: {
+								if (!isMissionCreated)
+								{
+									messageDialog.text = "You must first create mission!"
+									messageDialog.open()
+								}
+							}
 						}
 					}
 				}

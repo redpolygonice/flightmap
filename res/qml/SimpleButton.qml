@@ -1,0 +1,32 @@
+import QtQuick 2.0
+import QtQuick.Controls 2.15
+import QtQuick.Controls.Styles 1.4
+import QtQuick.Layouts 1.15
+
+Button {
+	id: control
+	ToolTip.visible: hovered
+	ToolTip.delay: Qt.styleHints.mousePressAndHoldInterval
+	padding: 0
+	font.pixelSize: 12
+
+	background: Rectangle {
+
+		color: {
+			if (mouseArea.containsMouse)
+				return "#aaaaaa"
+			else if (control.checked || control.down)
+				return "#aaaaaa"
+			else
+				return "#e0e0e0"
+		}
+
+		MouseArea {
+			id: mouseArea
+			anchors.fill: parent
+			hoverEnabled: true
+			cursorShape: Qt.PointingHandCursor
+			onClicked: control.clicked()
+		}
+	}
+}

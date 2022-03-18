@@ -14,7 +14,7 @@ Dog::Dog()
 	: _connected(false)
 	, _connections(nullptr)
 {
-	_connections = data::ConnectionList::create();
+	_connections = device::ConnectionManager::create();
 }
 
 Dog::~Dog()

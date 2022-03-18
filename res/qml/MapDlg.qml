@@ -14,6 +14,19 @@ Dialog {
 
 	standardButtons: StandardButton.Ok | StandardButton.Cancel
 
+	onVisibleChanged: {
+		if (visible)
+			contentItem.ApplicationWindow.window.flags |= Qt.WindowStaysOnTopHint
+	}
+	modality: "NonModal"
+
+//	MapSliders {
+//		id: sliders
+//		z: mainWindow.map.z + 3
+//		mapSource: mainWindow.map
+//		edge: Qt.LeftEdge
+//	}
+
 	Plugin {
 		id: mapPlugin
 	}
@@ -39,7 +52,7 @@ Dialog {
 		color: "#ffffff"
 		border.width: 2
 		border.color: "#aaaaaa"
-		radius: 5
+		radius: 3
 
 		ListModel {
 			id: listModel
@@ -50,7 +63,7 @@ Dialog {
 
 			Item {
 				width: listView.width
-				height: 25
+				height: 20
 
 				RowLayout {
 					Layout.alignment: Qt.AlignVCenter
@@ -80,7 +93,7 @@ Dialog {
 				clip: true
 				model: listModel
 				delegate: mapDelegate
-				highlight: Rectangle { color: "lightsteelblue"; radius: 5 }
+				highlight: Rectangle { color: "lightsteelblue"; radius: 3 }
 				highlightFollowsCurrentItem: true
 				highlightMoveDuration: 100
 				highlightMoveVelocity: -1

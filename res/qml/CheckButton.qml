@@ -16,14 +16,14 @@ CheckBox {
 		Rectangle {
 			anchors.fill: parent
 			visible: control.checked
-			color: "#555"
+			color: enabled ? "#555" : "grey"
 			anchors.margins: 4
 		}
 	}
 
 	contentItem: Text {
 		text: control.text
-		color: "white"
+		color: enabled ? "white" : "grey"
 		verticalAlignment: Text.AlignVCenter
 		leftPadding: 22
 		font.pixelSize: 12
