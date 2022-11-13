@@ -1,13 +1,16 @@
 #include "proxy.h"
 #include "common/log.h"
 #include "common/common.h"
-#include "main/dog.h"
+#include "main/broker.h"
 #include "common/settings.h"
 #include "common/devicetypes.h"
 #include "data/telebox.h"
+#include "data/qtcoordinate.h"
 
 #include <QVariant>
 #include <QDateTime>
+#include <QGeoCoordinate>
+#include <QDataStream>
 
 namespace core
 {
@@ -24,11 +27,16 @@ ProxyApp::~ProxyApp()
 	stopTelemetry();
 }
 
+void ProxyApp::log(const QString &text, int level)
+{
+	common::log(text.toStdString(), static_cast<common::Log::Level>(level));
+}
+
 void ProxyApp::init(QObject *object)
 {
 	_qmlObject = object;
-	_protocols << "TCP" << "UDPC" << "UDPS";
-	_devices << "Pixhawk" << "Raspi" << "Mavic";
+	_protocols << "TCP" << "UDPC" << "UDPS" << "Mock";
+	_devices << "Pixhawk" << "Raspi";
 
 	// Detect serial ports
 	StringList ports = common::getComPorts();
@@ -159,6 +167,68 @@ void ProxyApp::saveParameters(const QVariantMap &params)
 	common::Settings::instance()->save();
 }
 
+void ProxyApp::createMission(const QVariantList &points, const QVariantMap &params)
+{
+	if (points.isEmpty())
+		return;
+
+	variantMapToAnyMap(params, _missionParams);
+
+	data::CoordinateList coordinateList;
+	variantListToCoordinateList(points, coordinateList);
+
+	data::CoordinateList missionPoints;
+	if (!core::Broker::instance()->createMission(coordinateList, missionPoints, _missionParams))
+	{
+		LOGE("[ProxyApp] can't create mission!");
+		return;
+	}
+
+	if (missionPoints.empty())
+	{
+		LOGE("[ProxyApp] can't create mission!");
+		return;
+	}
+
+	coordinateListToVariantList(missionPoints, _missionPoints);
+	emit missionPointsChanged();
+}
+
+void ProxyApp::clearMission()
+{
+	if (!core::Broker::instance()->clearMission())
+		LOGE("[ProxyApp] can't clear mission!");
+
+	_missionPoints.clear();
+	_missionParams.clear();
+}
+
+void ProxyApp::writeMission()
+{
+	data::CoordinateList coordinateList;
+	variantListToCoordinateList(_missionPoints, coordinateList);
+
+	if (!core::Broker::instance()->writeMission(coordinateList, _missionParams))
+	{
+		LOGE("[ProxyApp] can't write mission!");
+		return;
+	}
+}
+
+void ProxyApp::readMission()
+{
+	data::CoordinateList coordinateList;
+
+	if (!core::Broker::instance()->readMission(coordinateList))
+	{
+		LOGE("[ProxyApp] can't read mission!");
+		return;
+	}
+
+	coordinateListToVariantList(coordinateList, _missionPoints);
+	emit missionPointsChanged();
+}
+
 void ProxyApp::saveMap(const QString &provider, const QString &type)
 {
 	common::Settings::instance()->set("mapProvider", provider.toStdString());
@@ -168,20 +238,28 @@ void ProxyApp::saveMap(const QString &provider, const QString &type)
 
 void ProxyApp::connect()
 {
-	if (Dog::instance()->isConnected())
+	if (Broker::instance()->isConnected())
 	{
 		LOGW("[ProxyApp] Device already connected!");
 		return;
 	}
 
+	std::stringstream host;
 	common::ConnectParams params = connectParams();
 
-	std::stringstream host;
-	host << _connection["protocol"].toString().toStdString() << " ";
-	if (params.protocol.find(UART_NAME) == 0 || params.protocol.find(PIXHAWK_NAME) == 0)
-		host << "baudrate: " << params.baudrate;
+	if (params.protocol == "Mock")
+	{
+		params.device = "Mock";
+		host << "Mock device";
+	}
 	else
-		host << "address: " << params.host << ":" << params.port;
+	{
+		host << _connection["protocol"].toString().toStdString() << " ";
+		if (params.protocol.find(UART_NAME) == 0 || params.protocol.find(PIXHAWK_NAME) == 0)
+			host << "baudrate: " << params.baudrate;
+		else
+			host << "address: " << params.host << ":" << params.port;
+	}
 
 	// Save connect optionss
 	common::Settings::instance()->set("connectProtocol", params.protocol);
@@ -192,25 +270,25 @@ void ProxyApp::connect()
 	common::Settings::instance()->save();
 
 	LOG("[ProxyApp] Connecting to " << host.str());
-	if (!Dog::instance()->connect(params))
+	if (!Broker::instance()->connect(params))
 	{
 		LOGE("[ProxyApp] Can't connect to device! " << host.str());
 		return;
 	}
 
-	LOG("[ProxyApp] Connected to " << params.device);
+	LOG("[ProxyApp] Connected to " << params.device << " device!");
 	startTelemetry();
 }
 
 void ProxyApp::disconnect()
 {
-	if (!Dog::instance()->isConnected())
+	if (!Broker::instance()->isConnected())
 	{
 		LOGW("[ProxyApp] There is no connected devices!");
 		return;
 	}
 
-	Dog::instance()->disconnect();
+	Broker::instance()->disconnect();
 	stopTelemetry();
 	LOG("[ProxyApp] Device disconnected!");
 }
@@ -219,7 +297,7 @@ void ProxyApp::startTelemetry()
 {
 	_active = true;
 	_telemetryThread = std::thread([this]() {
-		data::TeleBoxPtr telebox = core::Dog::instance()->telebox();
+		data::TeleBoxPtr telebox = core::Broker::instance()->telebox();
 		if (telebox == nullptr)
 		{
 			LOGC("[ProxyApp] There is no telemetry object!");
@@ -278,7 +356,7 @@ bool ProxyApp::isWindows()
 
 float ProxyApp::getAltitude(float lat, float lon)
 {
-	return Dog::instance()->getAltitude(lat, lon);
+	return Broker::instance()->getAltitude(lat, lon);
 }
 
 common::ConnectParams ProxyApp::connectParams() const
@@ -290,6 +368,26 @@ common::ConnectParams ProxyApp::connectParams() const
 	params.port = _connection["port"].toUInt();
 	params.baudrate = _connection["baudrate"].toUInt();
 	return params;
+}
+
+void ProxyApp::armDisarm(bool arm)
+{
+	Broker::instance()->armDisarm(arm);
+}
+
+void ProxyApp::loiter()
+{
+	Broker::instance()->loiter();
+}
+
+void ProxyApp::autom()
+{
+	Broker::instance()->autom();
+}
+
+void ProxyApp::rtl()
+{
+	Broker::instance()->rtl();
 }
 
 void ProxyApp::variantMapToAnyMap(const QVariantMap &variantMap, common::AnyMap &anyMap) const
@@ -344,6 +442,92 @@ void ProxyApp::anyMapToVariantMap(common::AnyMap &anyMap, QVariantMap &variantMa
 		else if (val.type() == typeid(time_t))
 			variantMap[variantKey] = QDateTime().fromTime_t(std::any_cast<time_t>(val));
 	}
+}
+
+void ProxyApp::variantListToCoordinateList(const QVariantList &variantList, data::CoordinateList &coordinateList) const
+{
+	coordinateList.clear();
+
+	for (QVariantList::const_iterator it = variantList.begin(); it != variantList.end(); ++it)
+	{
+		QGeoCoordinate geoCoordinate = (*it).value<QGeoCoordinate>();
+		double lat = geoCoordinate.latitude();
+		double lon = geoCoordinate.longitude();
+		double alt = geoCoordinate.altitude();
+
+		data::CoordinatePtr coordinate = data::QtCoordinate::create(lat, lon, alt);
+		coordinateList.push_back(coordinate);
+	}
+}
+
+void ProxyApp::coordinateListToVariantList(const data::CoordinateList &coordinateList, QVariantList &variantList) const
+{
+	variantList.clear();
+
+	for (data::CoordinateList::const_iterator it = coordinateList.begin(); it != coordinateList.end(); ++it)
+	{
+		data::CoordinatePtr coordinate = *it;
+		QGeoCoordinate geoCoordinate(coordinate->lat(), coordinate->lon(), coordinate->alt());
+
+		QVariant varCoordinate;
+		varCoordinate.setValue(geoCoordinate);
+		variantList.push_back(varCoordinate);
+	}
+}
+
+void ProxyApp::testMission()
+{
+	// Connect
+	common::ConnectParams params;
+	params.device = "Mock";
+	params.protocol = "Mock";
+
+	LOG("[ProxyApp] Connecting to Mock device");
+	if (!Broker::instance()->connect(params))
+	{
+		LOGE("[ProxyApp] Can't connect to Mock device!");
+		return;
+	}
+
+	LOG("[ProxyApp] Connected to Mock device");
+
+	// Mission params
+	common::AnyMap missionParams;
+	missionParams.set("polygon", false);
+	missionParams.set("homeLat", _parameters["mapLat"].toDouble());
+	missionParams.set("homeLon", _parameters["mapLon"].toDouble());
+	missionParams.set("alt", 50);
+	missionParams.set("altCheck", true);
+	missionParams.set("altType", 1);
+	missionParams.set("horizStep", 50);
+	missionParams.set("horizStepCheck", false);
+	missionParams.set("missionStep", 50);
+	missionParams.set("vertStep", 0);
+	missionParams.set("vertStepCheck", false);
+
+	// Create mission
+	data::CoordinateList coordinateList = {
+		data::QtCoordinate::create(59.938173207038275, 30.312955486759535),
+		data::QtCoordinate::create(59.93993597687384, 30.31454335448339),
+		data::QtCoordinate::create(59.939978970085285, 30.31889926191994),
+		data::QtCoordinate::create(59.93823770026752, 30.320916283101212)
+	};
+
+	data::CoordinateList missionPoints;
+	if (!core::Broker::instance()->createMission(coordinateList, missionPoints, missionParams))
+	{
+		LOGE("[ProxyApp] can't create mission!");
+		return;
+	}
+
+	if (missionPoints.empty())
+	{
+		LOGE("[ProxyApp] can't create mission!");
+		return;
+	}
+
+	coordinateListToVariantList(missionPoints, _missionPoints);
+	emit missionPointsChanged();
 }
 
 }

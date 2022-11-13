@@ -81,15 +81,15 @@ Row {
 		anchors.verticalCenter: parent.verticalCenter
 
 		transform:  Scale {
-						origin.x: rightEdge() ? 0 : sliderToggler.width / 2
-						xScale: rightEdge() ? 1 : -1
-					}
+			origin.x: rightEdge() ? 0 : sliderToggler.width / 2
+			xScale: rightEdge() ? 1 : -1
+		}
 
 		style:  ButtonStyle {
-					background: Rectangle {
-						color: "transparent"
-					}
-				}
+			background: Rectangle {
+				color: "transparent"
+			}
+		}
 
 		property real shear: 0.333
 		property real buttonOpacity: 0.5
@@ -228,7 +228,7 @@ Row {
 					to : containerRow.mapSource.maximumZoomLevel
 					value : containerRow.mapSource.zoomLevel
 					onValueChanged: {
-							containerRow.mapSource.zoomLevel = value
+						containerRow.mapSource.zoomLevel = value
 					}
 				}
 				C2.Slider {

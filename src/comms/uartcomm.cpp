@@ -1,6 +1,6 @@
 #include "uartcomm.h"
 #include "common/log.h"
-#include "main/dog.h"
+#include "main/broker.h"
 
 #ifndef WIN32
 #include <termios.h>

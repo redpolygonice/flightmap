@@ -8,7 +8,7 @@ LoggerPtr Log::_instance = nullptr;
 
 Log::Log()
 	: _active(false)
-	, _verb(Level::Debug)
+	, _verb(Level::Info)
 	, _callback(nullptr)
 {
 	string logName = "log-" + currentTime() + ".txt";

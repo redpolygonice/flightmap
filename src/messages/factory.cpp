@@ -6,6 +6,7 @@
 #include "gpsmessage.h"
 #include "sysstatusmessage.h"
 #include "statustextmessage.h"
+#include "autopilotversionmessage.h"
 
 namespace message
 {
@@ -105,6 +106,15 @@ MessagePtr Factory::create(const mavlink_message_t &mavlink)
 		message = StatusTextMessage::create(_device);
 		initDefaultParams(message, mavlink, "statustext");
 		message->_params["statustext"] = string(status.text);
+	}
+	else if (mavlink.msgid == MAVLINK_MSG_ID_AUTOPILOT_VERSION)
+	{
+		mavlink_autopilot_version_t autopilotversion;
+		mavlink_msg_autopilot_version_decode(&mavlink, &autopilotversion);
+
+		message = AutopilotVersionMessage::create(_device);
+		initDefaultParams(message, mavlink, "autopilotversion");
+		message->_params["capabilities"] = autopilotversion.capabilities;
 	}
 
 	return message;

@@ -12,7 +12,14 @@ Rectangle {
 	border.width: 2
 	border.color: "#ffffff"
 
-	property bool isMissionCreated: false
+	property alias alt: altValue
+	property alias altType: altType
+	property alias altCheck: checkAlt
+	property alias horizStep: horizStepValue
+	property alias horizStepCheck: horizStepCheck
+	property alias vertStep: vertStepValue
+	property alias vertStepCheck: vertStepCheck
+	property alias missionStep: missionStepValue
 
 	Component.onCompleted: {
 		if (drawModePoints.checked)
@@ -58,6 +65,7 @@ Rectangle {
 				onClicked: {
 					mapId.clearAll()
 					mapId.isMission = true
+					isMissionCreated = false
 				}
 			}
 
@@ -83,6 +91,7 @@ Rectangle {
 				onClicked: {
 					mapId.clearAll()
 					mapId.isMission = false
+					mapId.isMissionCreated = false
 				}
 			}
 		}
@@ -250,7 +259,7 @@ Rectangle {
 
 						Label {
 							Layout.preferredHeight: 15
-							text: "Points at every"
+							text: "Points every m"
 							color: "white"
 							Layout.leftMargin: 10
 							font.pixelSize: 12
@@ -288,7 +297,7 @@ Rectangle {
 							width: 60
 							Layout.preferredHeight: 20
 							Layout.preferredWidth: 60
-							model: [ "Absolut", "Relat", "Ground" ]
+							model: [ "Absolute", "Relative", "Terrain" ]
 						}
 					}
 
@@ -301,6 +310,7 @@ Rectangle {
 							id: checkAlt
 							Layout.preferredHeight: 15
 							text: "Check altitude"
+							checked: true
 						}
 					}
 
@@ -318,7 +328,17 @@ Rectangle {
 							ToolTip.text: qsTr("Create mission points")
 
 							onClicked: {
-								mapId.createMission(drawModePolygon.checked)
+								if (mapId.isMissionCreated)
+								{
+									proxy.log("Mission already created!")
+									return;
+								}
+
+								if (mapId.createMission(drawModePolygon.checked))
+								{
+									mapId.isMissionCreated = true
+									mapId.isMission = false
+								}
 							}
 						}
 
@@ -331,6 +351,7 @@ Rectangle {
 
 							onClicked: {
 								mapId.clearMission()
+								mapId.isMissionCreated = false
 							}
 						}
 					}
@@ -384,6 +405,11 @@ Rectangle {
 							Layout.preferredHeight: 20
 							text: qsTr("Restore")
 							ToolTip.text: qsTr("Restore mission from device")
+
+							onClicked: {
+								proxy.readMission()
+								mapId.isMissionCreated = true
+							}
 						}
 
 						SimpleButton {
@@ -399,6 +425,8 @@ Rectangle {
 									messageDialog.text = "You must first create mission!"
 									messageDialog.open()
 								}
+
+								proxy.writeMission()
 							}
 						}
 					}

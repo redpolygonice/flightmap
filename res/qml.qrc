@@ -34,5 +34,8 @@
         <file>qml/SimpleButton.qml</file>
         <file>qml/MapSliders.qml</file>
         <file>qml/MapDlg.qml</file>
+        <file>qml/MissionPoint.qml</file>
+        <file>qml/MissionLine.qml</file>
+        <file>img/yellow-marker.png</file>
     </qresource>
 </RCC>

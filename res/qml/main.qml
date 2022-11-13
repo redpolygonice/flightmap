@@ -25,7 +25,7 @@ ApplicationWindow {
 	property variant missionParams: null
 
 	Component.onCompleted: {
-		logWindow.setText("Let's go!")
+		proxy.log("Let's go!")
 		isWinOS = proxy.isWindows()
 
 		x = proxy.parameters["windowX"]
@@ -53,9 +53,9 @@ ApplicationWindow {
 		controlParams = { "visible": map.controlWidget.visible, "x":  map.controlWidget.x, "y": map.controlWidget.y }
 		missionParams = { "visible": map.missionWidget.visible, "x":  map.missionWidget.x, "y": map.missionWidget.y }
 		proxy.saveParameters({ "windowX": x, "windowY": y, "windowW": width, "windowH": height, "windowV": visibility,
-							"mapZoom": map.zoomLevel, "mapLat": map.center.latitude, "mapLon": map.center.longitude,
-							"mapTilt": map.tilt, "mapBear": map.bearing, "mapFov": map.fieldOfView, "telemetryWidget": telemetryParams,
-							 "hudWidget": hudParams, "controlWidget": controlParams, "missionWidget": missionParams})
+								 "mapZoom": map.zoomLevel, "mapLat": map.homePoint.latitude, "mapLon": map.homePoint.longitude,
+								 "mapTilt": map.tilt, "mapBear": map.bearing, "mapFov": map.fieldOfView, "telemetryWidget": telemetryParams,
+								 "hudWidget": hudParams, "controlWidget": controlParams, "missionWidget": missionParams})
 	}
 
 	ConnectDlg {
@@ -190,11 +190,21 @@ ApplicationWindow {
 			SplitView.minimumHeight: 100
 			height: mainWindow.contentItem.height - logWindow.height
 
-			MapSliders {
-				id: sliders
-				z: map.z + 3
-				mapSource: map
-				edge: Qt.LeftEdge
+//			MapSliders {
+//				id: sliders
+//				z: map.z + 3
+//				mapSource: map
+//				edge: Qt.LeftEdge
+//			}
+
+			Component {
+				id: mapSliders
+				MapSliders {
+					id: sliders
+					z: map.z + 3
+					mapSource: map
+					edge: Qt.LeftEdge
+				}
 			}
 
 			Component {
@@ -260,6 +270,8 @@ ApplicationWindow {
 		}
 
 		map.forceActiveFocus()
+		mapSliders.createObject(mapRect);
+
 		footerMap.text = "Map: " + parameters["provider"]  + ": " + parameters["mapType"]
 		footerZoom.text = "Zoom: " + zoomLevel.toFixed(1)
 		proxy.saveMap(parameters["provider"], parameters["mapType"])

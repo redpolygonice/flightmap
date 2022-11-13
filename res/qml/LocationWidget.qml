@@ -39,6 +39,7 @@ Rectangle {
 		Text {
 			id: text1
 			Layout.leftMargin: 5
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("Home:")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -46,6 +47,7 @@ Rectangle {
 
 		Text {
 			id: textHome
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("0.00 km")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -54,6 +56,7 @@ Rectangle {
 		Text {
 			id: text2
 			text: qsTr(" | ")
+			horizontalAlignment: Text.AlignHCenter
 			color: "yellow"
 			font.pixelSize: 12
 			font.bold: true
@@ -61,6 +64,7 @@ Rectangle {
 
 		Text {
 			id: text3
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("Mission:")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -68,6 +72,7 @@ Rectangle {
 
 		Text {
 			id: textMission
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("0.00 km")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -75,6 +80,7 @@ Rectangle {
 
 		Text {
 			id: text4
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr(" | ")
 			color: "yellow"
 			font.pixelSize: 12
@@ -83,6 +89,7 @@ Rectangle {
 
 		Text {
 			id: text5
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("Goal:")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -90,6 +97,7 @@ Rectangle {
 
 		Text {
 			id: textGoal
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("0.00 km")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -97,6 +105,7 @@ Rectangle {
 
 		Text {
 			id: text6
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr(" | ")
 			color: "yellow"
 			font.pixelSize: 12
@@ -105,6 +114,7 @@ Rectangle {
 
 		Text {
 			id: text7
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("Lat:")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -112,6 +122,7 @@ Rectangle {
 
 		Text {
 			id: textLat
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("0.00000")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -119,6 +130,7 @@ Rectangle {
 
 		Text {
 			id: text8
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr(" | ")
 			color: "yellow"
 			font.pixelSize: 12
@@ -127,6 +139,7 @@ Rectangle {
 
 		Text {
 			id: text9
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("Lon:")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -134,6 +147,7 @@ Rectangle {
 
 		Text {
 			id: textLon
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("0.00000")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -141,6 +155,7 @@ Rectangle {
 
 		Text {
 			id: text10
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr(" | ")
 			color: "yellow"
 			font.pixelSize: 12
@@ -149,6 +164,7 @@ Rectangle {
 
 		Text {
 			id: text11
+			horizontalAlignment: Text.AlignHCenter
 			text: qsTr("Alt:")
 			color: "#ffffff"
 			font.pixelSize: 12
@@ -156,6 +172,7 @@ Rectangle {
 
 		Text {
 			id: textAlt
+			horizontalAlignment: Text.AlignHCenter
 			Layout.rightMargin: 5
 			text: qsTr("0.0 m")
 			color: "#ffffff"
@@ -170,5 +187,18 @@ Rectangle {
 		textLat.text = coord.latitude.toFixed(5)
 		textLon.text = coord.longitude.toFixed(5)
 		textAlt.text = proxy.getAltitude(coord.latitude, coord.longitude).toFixed(1) + " m";
+	}
+
+	function setMissionDistance(points)
+	{
+		if (points === null)
+			textMission.text = "0.00 km"
+		else
+		{
+			var distance = 0.0
+			for (var i = 0; i < points.length - 1; i++)
+				distance = distance + points[i].distanceTo(points[i + 1])
+			textMission.text = (distance / 1000).toFixed(2) + " km"
+		}
 	}
 }

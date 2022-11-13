@@ -17,6 +17,7 @@ string getCurrentDir();
 void copyFile(const string &from, const string &to);
 void createDir(const string &dir);
 bool unzip(const string &fileName, const string &destDir);
+inline void sleep(long ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
 
 }
 

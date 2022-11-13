@@ -44,14 +44,23 @@ Dialog {
 			id: protocolComboBox
 			width: 100
 			onCurrentIndexChanged: {
-				if (currentIndex <= 2)
+				if (currentIndex == 3)
 				{
+					deviceComboBox.enabled = false
+					baudrateText.enabled = false
+					hostText.enabled = false
+					portText.enabled = false
+				}
+				else if (currentIndex <= 2)
+				{
+					deviceComboBox.enabled = true
 					baudrateText.enabled = false
 					hostText.enabled = true
 					portText.enabled = true
 				}
 				else
 				{
+					deviceComboBox.enabled = true
 					baudrateText.enabled = true
 					hostText.enabled = false
 					portText.enabled = false

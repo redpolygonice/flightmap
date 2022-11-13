@@ -9,8 +9,9 @@ Map {
 	zoomLevel: 16
 
 	property variant homePoint: null
+	property bool isMissionCreated: false
 	property bool isMission: false
-	property bool isPolygon: true
+	property bool isPolygon: false
 	property variant quadro: null
 	property alias telemetryWidget: telemetryWidgetId;
 	property alias hudWidget: hudWidgetId;
@@ -19,11 +20,15 @@ Map {
 
 	Component.onCompleted: {
 		homePoint = QtPositioning.coordinate(proxy.parameters["mapLat"], proxy.parameters["mapLon"])
-		greenPin.coordinate = homePoint
+		homePin.coordinate = homePoint
 		telemetryButton.checked = telemetryWidget.visible
 		hudButton.checked = hudWidget.visible
 		controlButton.checked = controlWidget.visible
 		missionButton.checked = missionWidget.visible
+
+		proxy.onMissionPointsChanged.connect(function() {
+			drawMission()
+		})
 	}
 
 	LocationWidget {
@@ -70,16 +75,25 @@ Map {
 		id: polygon
 		border.width: 3
 		border.color: 'red'
+		opacity: 0.7
 	}
 
 	MapPolyline {
-		id: lines
+		id: redLine
 		line.width: 3
 		line.color: 'red'
+		opacity: 0.7
+	}
+
+	MapPolyline {
+		id: yellowLine
+		line.width: 3
+		line.color: 'yellow'
+		opacity: 0.7
 	}
 
 	MapQuickItem {
-		id: greenPin
+		id: homePin
 		sourceItem: Image {
 			id: imageGreenPin
 			source: "qrc:/img/green-pin.png"
@@ -110,7 +124,8 @@ Map {
 
 	function addMarker(x, y)
 	{
-		var item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; MapQuickItem { sourceItem: Image { id: image; source: "qrc:/img/green-marker.png"; }}', mapId, 'dynamic')
+		var item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; MapQuickItem {
+			opacity: 0.7; sourceItem: Image { id: image; source: "qrc:/img/yellow-marker.png"; }}', mapId, 'dynamic')
 		item.coordinate = mapId.toCoordinate(Qt.point(x, y))
 		item.anchorPoint.x = item.sourceItem.width / 2
 		item.anchorPoint.y = item.sourceItem.height
@@ -119,8 +134,34 @@ Map {
 		if (isPolygon)
 			polygon.addCoordinate(item.coordinate)
 		else
-			lines.addCoordinate(item.coordinate)
+			yellowLine.addCoordinate(item.coordinate)
 	}
+
+	function addItem(coordinate)
+	{
+		var item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; MapQuickItem {
+			opacity: 0.7; sourceItem: Image { id: image; source: "qrc:/img/green-marker.png"; }}', mapId, 'dynamic')
+		item.coordinate = coordinate
+		item.anchorPoint.x = item.sourceItem.width / 2
+		item.anchorPoint.y = item.sourceItem.height
+		mapId.addMapItem(item)
+
+		if (isPolygon)
+			polygon.addCoordinate(item.coordinate)
+		else
+			redLine.addCoordinate(item.coordinate)
+	}
+
+	function addPoint(number, coordinate)
+	{
+		var item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; MissionPoint { }', mapId, 'dynamic')
+		item.coordinate = coordinate
+		item.anchorPoint.x = item.sourceItem.width / 2
+		item.anchorPoint.y = item.sourceItem.height / 2
+		item.number = number
+		mapId.addMapItem(item)
+	}
+
 
 	function addQuadro(lat, lon)
 	{
@@ -176,28 +217,95 @@ Map {
 		var i = 0
 		while (i < mapItems.length) {
 			var item = mapItems[i]
-			if (item !== greenPin && item !== polygon && item !== lines)
+			if (item !== homePin && item !== polygon && item !== redLine && item !== yellowLine)
 				removeMapItem(item)
 			else
 				i = i + 1
 		}
 
-		while (lines.path.length > 0) {
-			lines.removeCoordinate(lines.path[0])
+		while (redLine.path.length > 0) {
+			redLine.removeCoordinate(redLine.path[0])
+		}
+
+		while (yellowLine.path.length > 0) {
+			yellowLine.removeCoordinate(yellowLine.path[0])
 		}
 
 		while (polygon.path.length > 0) {
 			polygon.removeCoordinate(polygon.path[0])
 		}
+
+		locationWidget.setMissionDistance(null)
 	}
 
 	function createMission(isPolygon)
 	{
+		var params = { "polygon": isPolygon,
+			"homeLat": homePoint.latitude,
+			"homeLon": homePoint.longitude,
+			"alt": missionWidget.alt.value,
+			"altType": missionWidget.altType.currentIndex,
+			"altCheck": missionWidget.altCheck.checked,
+			"missionStep": missionWidget.missionStep.value,
+			"horizStep": missionWidget.horizStep.value,
+			"horizStepCheck": missionWidget.horizStepCheck.checked,
+			"vertStep": missionWidget.vertStep.value,
+			"vertStepCheck": missionWidget.vertStepCheck.checked }
 
+		if (isPolygon)
+		{
+			if (polygon.path.length <= 1)
+			{
+				proxy.log("Too small coordinate count!")
+				return false
+			}
+
+			proxy.createMission(polygon.path, params)
+		}
+		else
+		{
+			if (yellowLine.path.length <= 1)
+			{
+				proxy.log("Too small coordinate count!")
+				return false
+			}
+
+			proxy.createMission(yellowLine.path, params)
+		}
+
+		return true
 	}
 
 	function clearMission()
 	{
+		clearAll()
+	}
 
+	function drawMission()
+	{
+		clearAll()
+
+		var points = proxy.missionPoints
+		if (points.length === 0)
+			return
+
+		for (var i = 0; i < points.length; i++)
+		{
+			addPoint(i + 1, points[i])
+
+			if (i !== 0 && i !== points.length - 1)
+			{
+				if (isPolygon)
+					polygon.addCoordinate(points[i])
+				else
+					redLine.addCoordinate(points[i])
+			}
+		}
+
+		yellowLine.addCoordinate(points[points.length - 2])
+		yellowLine.addCoordinate(points[0])
+		yellowLine.addCoordinate(points[1])
+
+		locationWidget.setMissionDistance(points)
 	}
 }

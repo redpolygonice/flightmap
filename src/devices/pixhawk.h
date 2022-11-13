@@ -5,6 +5,7 @@
 #include "devices/idevice.h"
 #include "comms/icommunication.h"
 #include "messages/factory.h"
+#include "data/missionitem.h"
 
 namespace device
 {
@@ -12,27 +13,6 @@ namespace device
 // Pixhawk device
 class Pixhawk : public IDevice, public std::enable_shared_from_this<Pixhawk>
 {
-public:
-	enum FlightModes : uint32_t
-	{
-		MODE_STABILIZE = 0,
-		MODE_ACRO = 1,
-		MODE_ALT_HOLD = 2,
-		MODE_AUTO = 3,
-		MODE_GUIDED = 4,
-		MODE_LOITER = 5,
-		MODE_RTL = 6,
-		MODE_CIRCLE = 7,
-		MODE_LAND = 9,
-		MODE_DRIFT = 11,
-		MODE_SPORT = 13,
-		MODE_FLIP = 14,
-		MODE_AUTOTUNE = 15,
-		MODE_POSHOLD = 16,
-		MODE_BRAKE = 17,
-		MODE_THROW = 18,
-	};
-
 private:
 	std::atomic_bool _active;
 	std::thread _heartbeatThread;
@@ -64,11 +44,22 @@ public:
 	string name() const override;
 	bool start() override;
 	void stop() override;
-	void sendCommand(uint32_t cmd, float param1 = 0, float param2 = 0, float param3 = 0, float param4 = 0,
+	bool sendMessage(mavlink_message_t &message) override;
+	void sendCommand(uint16_t cmd, float param1 = 0, float param2 = 0, float param3 = 0, float param4 = 0,
 					 float param5 = 0, float param6 = 0, float param7 = 0) override;
+	void sendCommandInt(uint16_t cmd, float param1 = 0, float param2 = 0, float param3 = 0, float param4 = 0,
+								 float x = 0, float y = 0, float z = 0) override;
+	bool createMission(const data::CoordinateList &points, data::CoordinateList &mission, const common::AnyMap &params) override;
+	void clearMission() override;
+	void writeMission(const data::CoordinateList &points, const common::AnyMap &params) override;
+	void readMission(data::CoordinateList &points) override;
+	void RcChannelsOverride(uint16_t ch1, uint16_t ch2, uint16_t ch3, uint16_t ch4, uint16_t ch5 = UINT16_MAX,
+			uint16_t ch6 = UINT16_MAX) override;
+	void setMode(uint32_t mode) override;
+	void setHome(float lat, float lon, float alt) override;
+	void setPosition(double lat, double lon, double alt) override;
 
 private:
-	bool sendMessage(mavlink_message_t &message);
 	void startHeartbeat();
 	bool requestData();
 	void readData(const ByteArray &data);

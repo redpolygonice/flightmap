@@ -27,7 +27,14 @@ enum class DeviceType
 {
 	Pixhawk,
 	Raspi,
-	Mavik
+	Mock
+};
+
+enum class AltType
+{
+	Absolute,
+	Relative,
+	Terrain
 };
 
 struct ConnectParams

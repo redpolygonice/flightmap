@@ -8,7 +8,7 @@
 #endif
 
 #include "proxy.h"
-#include "dog.h"
+#include "broker.h"
 #include "common/log.h"
 #include "common/settings.h"
 #include "messages/dispatcher.h"
@@ -17,7 +17,7 @@
 
 void sighandler(int /*sig*/)
 {
-	core::Dog::instance()->stop();
+	core::Broker::instance()->stop();
 	LOG("Program terminated");
 	exit(1);
 }
@@ -40,6 +40,7 @@ int main(int argc, char *argv[])
 #endif
 
 	common::Log::create();
+	common::Log::setVerb(common::Log::Level::Debug);
 	common::Settings::instance()->load();
 
 	core::ProxyApp proxy;
@@ -56,7 +57,7 @@ int main(int argc, char *argv[])
 
 	engine.load(url);
 	QObject::connect(&engine, &QQmlApplicationEngine::quit, [] () {
-		core::Dog::instance()->stop();
+		core::Broker::instance()->stop();
 		LOG("Quit application!");
 		qApp->quit();
 	});
@@ -77,5 +78,9 @@ int main(int argc, char *argv[])
 
 	QMetaObject::invokeMethod(rootItem, "createMap", Q_ARG(QVariant, QVariant::fromValue(parameters)));
 	message::Dispatcher::instance()->start();
+
+	// Debug
+	//proxy.testMission();
+
 	return app.exec();
 }

@@ -5,6 +5,7 @@
 #include "comms/udpccomm.h"
 #include "comms/udpscomm.h"
 #include "comms/uartcomm.h"
+#include "comms/mockcomm.h"
 
 namespace comms
 {
@@ -29,6 +30,10 @@ CommunicationPtr CommBuilder::create(const common::ConnectParams &params)
 	else if (params.protocol == "UDPS")
 	{
 		comm = comms::UdpsComm::create(params);
+	}
+	else if (params.protocol == "Mock")
+	{
+		comm = comms::MockComm::create(params);
 	}
 	else if (params.protocol.find(UART_NAME) == 0 || params.protocol.find(PIXHAWK_NAME) == 0)
 	{
