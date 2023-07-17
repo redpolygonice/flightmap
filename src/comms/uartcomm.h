@@ -15,7 +15,7 @@ namespace comms
 class UartComm : public ICommunication
 {
 private:
-	bool _active;
+	std::atomic_bool _active;
 #ifdef WIN32
 	HANDLE _handle;
 #else
@@ -34,13 +34,13 @@ public:
 
 public:
 	static CommunicationPtr create(const common::ConnectParams &params) { return std::make_shared<UartComm>(params); }
-	bool open() override;
-	bool open(const string &host, unsigned short port) override { return false; }
-	void close() override;
-	void start(const ReadFunction &callback) override;
-	bool write(const unsigned char *buffer, size_t size) override;
+	bool Open() override;
+	bool Open(const string &host, unsigned short port) override { return false; }
+	void Close() override;
+	void Start(const ReadFunction &callback) override;
+	bool Write(const unsigned char *buffer, size_t size) override;
 #ifndef WIN32
-	void setBaudRate(uint32_t rate) override;
+	void SetBaudRate(uint32_t rate) override;
 #endif
 };
 

@@ -11,7 +11,7 @@ namespace common
 class AnyMap
 {
 private:
-	std::map<string, std::any> _data;
+	mutable std::map<string, std::any> _data;
 
 public:
 	AnyMap();
@@ -24,16 +24,16 @@ public:
 	const_iterator cbegin() { return _data.cbegin(); }
 	const_iterator cend() { return _data.cend(); }
 
-	void push(const string &key, const std::any &value) { _data[key] = value; }
+	void Push(const string &key, const std::any &value) { _data[key] = value; }
 
-	void set(const string &key, const std::any &value) { push(key, value); }
+	void Set(const string &key, const std::any &value) { Push(key, value); }
 
-	template<typename T> void set(const string &key, const T &value)
+	template<typename T> void Set(const string &key, const T &value)
 	{
-		push(key, value);
+		Push(key, value);
 	}
 
-	template<typename T> T get(const string &key, T defValue = T())
+	template<typename T> T Get(const string &key, T defValue = T()) const
 	{
 		if (_data.find(key) == _data.end())
 			return defValue;
@@ -55,16 +55,16 @@ public:
 		return value;
 	}
 
-	void clear() { _data.clear(); }
+	void Clear() { _data.clear(); }
 
-	bool find(const string &key) const
+	bool Find(const string &key) const
 	{
 		if (_data.find(key) == _data.end())
 			return false;
 		return true;
 	}
 
-	bool empty() const { return _data.empty(); }
+	bool Empty() const { return _data.empty(); }
 };
 
 }

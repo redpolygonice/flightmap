@@ -54,8 +54,13 @@ ApplicationWindow {
 		missionParams = { "visible": map.missionWidget.visible, "x":  map.missionWidget.x, "y": map.missionWidget.y }
 		proxy.saveParameters({ "windowX": x, "windowY": y, "windowW": width, "windowH": height, "windowV": visibility,
 								 "mapZoom": map.zoomLevel, "mapLat": map.homePoint.latitude, "mapLon": map.homePoint.longitude,
-								 "mapTilt": map.tilt, "mapBear": map.bearing, "mapFov": map.fieldOfView, "telemetryWidget": telemetryParams,
-								 "hudWidget": hudParams, "controlWidget": controlParams, "missionWidget": missionParams})
+								 "mapTilt": map.tilt, "mapBear": map.bearing, "mapFov": map.fieldOfView, "missionPolygon": map.missionWidget.polygon,
+								 "missionAlt": map.missionWidget.alt.value, "missionAltType": map.missionWidget.altType.currentIndex,
+								 "missionAltCheck": map.missionWidget.altCheck.checked, "missionHorizStep": map.missionWidget.horizStep.value,
+								 "missionHorizStepCheck": map.missionWidget.horizStepCheck.checked, "missionVertStep": map.missionWidget.vertStep.value,
+								 "missionVertStepCheck": map.missionWidget.vertStepCheck.checked, "missionStep": map.missionWidget.missionStep.value,
+								 "telemetryWidget": telemetryParams,  "hudWidget": hudParams,
+								 "controlWidget": controlParams, "missionWidget": missionParams})
 	}
 
 	ConnectDlg {
@@ -190,13 +195,6 @@ ApplicationWindow {
 			SplitView.minimumHeight: 100
 			height: mainWindow.contentItem.height - logWindow.height
 
-//			MapSliders {
-//				id: sliders
-//				z: map.z + 3
-//				mapSource: map
-//				edge: Qt.LeftEdge
-//			}
-
 			Component {
 				id: mapSliders
 				MapSliders {
@@ -284,7 +282,12 @@ ApplicationWindow {
 
 	function disconnect()
 	{
-		proxy.disconnect()
+		var quadro = map.activeQuadro()
+		if (quadro !== null)
+		{
+			proxy.disconnect(quadro.number)
+			map.removeQuadro(quadro.number)
+		}
 	}
 
 	function showTelemetry()
@@ -314,7 +317,11 @@ ApplicationWindow {
 
 	function goHome()
 	{
-		map.center = QtPositioning.coordinate(proxy.telemetry["lat"], proxy.telemetry["lon"])
-		map.addQuadro(proxy.telemetry["lat"], proxy.telemetry["lon"])
+		var quadro = map.activeQuadro()
+		if (quadro !== null)
+		{
+			map.homePoint = quadro.coordinate
+			map.center = map.homePoint
+		}
 	}
 }

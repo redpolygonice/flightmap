@@ -1,51 +1,181 @@
 #include "raspi.h"
+#include "common/log.h"
+#include "common/common.h"
+#include "messages/dispatcher.h"
+#include <cstdint>
 
 namespace device
 {
 
 Raspi::Raspi(const comms::CommunicationPtr &comm)
-	: IDevice(comm)
+	: FlightDevice(comm)
+	, _active(false)
 {
-	_type = common::DeviceType::Raspi;
+	_type = common::DeviceType::Pixhawk;
+	_missionTypes = { MAVLINK_MSG_ID_MISSION_COUNT, MAVLINK_MSG_ID_MISSION_REQUEST, MAVLINK_MSG_ID_MISSION_REQUEST_INT,
+						MAVLINK_MSG_ID_MISSION_ITEM, MAVLINK_MSG_ID_MISSION_ITEM_INT, MAVLINK_MSG_ID_MISSION_ACK,
+						MAVLINK_MSG_ID_MISSION_REQUEST_LIST, MAVLINK_MSG_ID_MISSION_SET_CURRENT };
 }
 
-device::Raspi::~Raspi()
+Raspi::~Raspi()
 {
 }
 
-bool Raspi::start()
+std::string Raspi::Name() const
 {
+	return _comm->connectParams().device + " " + _comm->connectParams().protocol;
+}
+
+bool Raspi::Start()
+{
+	if (_active)
+		return true;
+
+	// Initialize
+	_active = true;
+	_messageFactory.Init(shared_from_this());
+	_telebox = data::TeleBox::Create();
+	_telebox->Enable();
+
+	// Start reading from pixhawk
+	_comm->Start([this](const ByteArray &data) { ReadData(data); });
+	_processThread = std::thread([this]() { ProcessData(); });
+
+	// Request data
+	RequestData();
+	StartHeartbeat();
+	return true;
+}
+
+void Raspi::Stop()
+{
+	_active = false;
+	_telebox->Disable();
+
+	if (_heartbeatThread.joinable())
+		_heartbeatThread.join();
+
+	if (_processThread.joinable())
+		_processThread.join();
+
+	_comm->Close();
+}
+
+bool Raspi::WaitHeartbeat()
+{
+	int heartbeatTimeout = 30;
+	while (heartbeatTimeout-- >= 0)
+	{
+		if (_telebox->_hbTime > 0)
+			return true;
+
+		common::Sleep(1000);
+	}
+
 	return false;
 }
 
-void Raspi::stop()
+void Raspi::StartHeartbeat()
 {
+	_heartbeatThread = std::thread([this]()
+	{
+		mavlink_message_t message;
+		mavlink_heartbeat_t heartbeat;
+		memset(&heartbeat, 0, sizeof(heartbeat));
+
+		heartbeat.type = MAV_AUTOPILOT_GENERIC_WAYPOINTS_AND_SIMPLE_NAVIGATION_ONLY;
+		heartbeat.system_status = 0;
+		heartbeat.custom_mode = 0;
+		heartbeat.base_mode = 0;
+		heartbeat.autopilot = 0;
+		mavlink_msg_heartbeat_encode(_systemId, _componentId, &message, &heartbeat);
+
+		while (_active)
+		{
+			if (!Send(message))
+				LOGE("[Pixhawk] Can't send Heartbeat!");
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+	});
 }
 
-void Raspi::sendCommand(uint16_t cmd, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+bool Raspi::RequestData()
 {
+	mavlink_message_t message;
+	memset(&message, 0, sizeof(message));
+	mavlink_request_data_stream_t data;
+	memset(&data, 0, sizeof(data));
+
+	data.req_message_rate = 2;
+	data.req_stream_id = MAV_DATA_STREAM_ALL;
+	data.start_stop = 1;
+	data.target_system = _targetSysid;
+	data.target_component = MAV_COMP_ID_ALL;
+	mavlink_msg_request_data_stream_encode(_systemId, _componentId, &message, &data);
+
+	if (!Send(message))
+	{
+		LOGE("[Pixhawk] Can't request data!");
+		return false;
+	}
+
+	return true;
 }
 
-void Raspi::sendCommandInt(uint16_t cmd, float param1, float param2, float param3, float param4, float x, float y, float z)
+void Raspi::ReadData(const ByteArray &data)
 {
-
+	std::lock_guard<std::mutex> lock(_mutexData);
+	_data.insert(_data.end(), data.begin(), data.end());
 }
 
-bool Raspi::createMission(const data::CoordinateList &points, data::CoordinateList &mission, const common::AnyMap &params)
+bool Raspi::ProcessData()
 {
-	return false;
-}
+	mavlink_message_t message;
+	mavlink_status_t status;
 
-void Raspi::clearMission()
-{
-}
+	while (_active)
+	{
+		_mutexData.lock();
+		bool empty = _data.empty();
+		_mutexData.unlock();
 
-void Raspi::writeMission(const data::CoordinateList &points, const common::AnyMap &params)
-{
-}
+		if (empty)
+		{
+			common::Sleep(50);
+			continue;
+		}
 
-void Raspi::readMission(data::CoordinateList &points)
-{
+		_mutexData.lock();
+		ByteArray temp(std::move(_data));
+		_mutexData.unlock();
+
+		for (size_t i = 0; i < temp.size(); ++i)
+		{
+			if (mavlink_parse_char(0, temp[i], &message, &status))
+			{
+				_sequence = message.seq;
+				_targetSysid = message.sysid;
+				_targetCompid = message.compid;
+
+				if (_mission != nullptr)
+				{
+					if (std::find(_missionTypes.begin(), _missionTypes.end(), message.msgid) != _missionTypes.end())
+					{
+						_mission->ProcessMessage(message);
+						continue;
+					}
+				}
+
+				message::MessagePtr messagePtr = _messageFactory.Create(message);
+				if (messagePtr != nullptr)
+					message::Dispatcher::instance()->Add(messagePtr);
+			}
+		}
+
+		common::Sleep(100);
+	}
+
+	return true;
 }
 
 }

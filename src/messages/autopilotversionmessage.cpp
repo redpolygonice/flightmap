@@ -8,12 +8,12 @@ AutopilotVersionMessage::AutopilotVersionMessage(const device::DevicePtr &device
 {
 }
 
-void AutopilotVersionMessage::execute()
+void AutopilotVersionMessage::Execute()
 {
 	if (_direction == IMessage::Direction::FromDevice)
 	{
 		_state = IMessage::State::Progress;
-		_device->mission()->setCapabilities(std::any_cast<uint64_t>(_params["capabilities"]));
+		_device->Mission()->SetCapabilities(std::any_cast<uint64_t>(_params["capabilities"]));
 		_state = IMessage::State::Done;
 	}
 }

@@ -24,13 +24,13 @@ public:
 	virtual ~IMission() {}
 
 public:
-	virtual bool processMessage(const mavlink_message_t &message) = 0;
-	virtual bool createPoints(const CoordinateList &markers, CoordinateList &mission, const common::AnyMap &params) = 0;
-	virtual void createCommands(const CoordinateList &points, MissionItemList &items) = 0;
-	virtual void write(const data::CoordinateList &points, const common::AnyMap &params) = 0;
-	virtual void read(data::CoordinateList &points) = 0;
-	virtual void clear() = 0;
-	virtual void setCapabilities(uint64_t capabilities) {}
+	virtual bool ProcessMessage(const mavlink_message_t &message) = 0;
+	virtual bool CreatePoints(const CoordinateList &markers, CoordinateList &mission, const common::AnyMap &params) = 0;
+	virtual void CreateCommands(const CoordinateList &points, MissionItemList &items) = 0;
+	virtual void Write(const data::CoordinateList &points, const common::AnyMap &params) = 0;
+	virtual void Read(data::CoordinateList &points) = 0;
+	virtual void Clear() = 0;
+	virtual void SetCapabilities(uint64_t capabilities) {}
 };
 
 typedef std::shared_ptr<IMission> MissionPtr;

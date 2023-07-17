@@ -12,11 +12,13 @@ Srtm::Srtm()
 	_srtmPath = "d:\\distr\\srtm";
 #else
 	_srtmPath = "/home/alexey/distr/srtm";
+	if (!common::IsFileExists(_srtmPath))
+		_srtmPath = "/home/aleksey/distr/srtm";
 #endif
-	_dataPath = common::getCurrentDir() + PS + "srtm";
+	_dataPath = common::GetCurrentDir() + PS + "srtm";
 
-	if (!common::isFileExists(_dataPath))
-		common::createDir(_dataPath);
+	if (!common::IsFileExists(_dataPath))
+		common::CreateDir(_dataPath);
 
 	// Create filename list
 	for (int y = -90; y <= 90; y++)
@@ -39,7 +41,7 @@ Srtm::Srtm()
 	_oceanNames = { "00W000", "00W001", "01W000", "01W001", "00E000", "00E001", "01E000", "01E001" };
 }
 
-std::string Srtm::getFilename(float lat, float lon)
+std::string Srtm::GetFileName(float lat, float lon)
 {
 	int x = (int)floor(lon);
 	int y = (int)floor(lat);
@@ -51,31 +53,31 @@ std::string Srtm::getFilename(float lat, float lon)
 	return string();
 }
 
-bool Srtm::copyFile(const std::string &fileName) const
+bool Srtm::CopyFile(const std::string &fileName) const
 {
 	string srtmFile = _srtmPath + PS + fileName + ".zip";
-	if (!common::isFileExists(srtmFile))
+	if (!common::IsFileExists(srtmFile))
 		return false;
 
-	if (!common::unzip(srtmFile, _dataPath))
+	if (!common::Unzip(srtmFile, _dataPath))
 		return false;
 
 	return true;
 }
 
-float Srtm::getAlt(std::string filename, int x, int y)
+float Srtm::GetAlt(std::string filename, int x, int y)
 {
 	return _cache[filename][x][y];
 }
 
-float Srtm::avg(float v1, float v2, float weight)
+float Srtm::Avg(float v1, float v2, float weight)
 {
 	return v2 * weight + v1 * (1 - weight);
 }
 
-float Srtm::getAltitude(float lat, float lon, float zoom)
+float Srtm::GetAltitude(float lat, float lon, float zoom)
 {
-	string fileName = getFilename(lat, lon);
+	string fileName = GetFileName(lat, lon);
 	if (fileName.empty())
 		return 0.0f;
 
@@ -86,13 +88,13 @@ float Srtm::getAltitude(float lat, float lon, float zoom)
 	}
 
 	string filePath = _dataPath + PS + fileName;
-	if (!common::isFileExists(filePath))
+	if (!common::IsFileExists(filePath))
 	{
-		if (!copyFile(fileName))
+		if (!CopyFile(fileName))
 			return 0.0f;
 	}
 
-	if (_cache.find(fileName) != _cache.end() || common::isFileExists(filePath))
+	if (_cache.find(fileName) != _cache.end() || common::IsFileExists(filePath))
 	{
 		int size = -1;
 
@@ -165,14 +167,14 @@ float Srtm::getAltitude(float lat, float lon, float zoom)
 
 		y_int = (size - 2) - y_int;
 
-		float alt00 = getAlt(fileName, x_int, y_int);
-		float alt10 = getAlt(fileName, x_int + 1, y_int);
-		float alt01 = getAlt(fileName, x_int, y_int + 1);
-		float alt11 = getAlt(fileName, x_int + 1, y_int + 1);
+		float alt00 = GetAlt(fileName, x_int, y_int);
+		float alt10 = GetAlt(fileName, x_int + 1, y_int);
+		float alt01 = GetAlt(fileName, x_int, y_int + 1);
+		float alt11 = GetAlt(fileName, x_int + 1, y_int + 1);
 
-		float v1 = avg(alt00, alt10, x_frac);
-		float v2 = avg(alt01, alt11, x_frac);
-		float v = avg(v1, v2, 1 - y_frac);
+		float v1 = Avg(alt00, alt10, x_frac);
+		float v2 = Avg(alt01, alt11, x_frac);
+		float v = Avg(v1, v2, 1 - y_frac);
 
 		if (v < -1000)
 			return 0.0f;

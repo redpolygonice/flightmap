@@ -19,12 +19,17 @@ public:
 	~ThreadSafeQueue() {}
 
 public:
-	void push(const T &element)
+	void Push(const T &element)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		_data.push(element);
 	}
-	T pop()
+	void Push(T &&element)
+	{
+		std::lock_guard<std::mutex> lock(_mutex);
+		_data.push(std::move(element));
+	}
+	T Pop()
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_data.empty())
@@ -34,7 +39,7 @@ public:
 		_data.pop();
 		return element;
 	}
-	bool pop(T &element)
+	bool Pop(T &element)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_data.empty())
@@ -44,19 +49,29 @@ public:
 		_data.pop();
 		return true;
 	}
-	bool isEmpty() const
+	bool Pop(T &&element)
+	{
+		std::lock_guard<std::mutex> lock(_mutex);
+		if (_data.empty())
+			return false;
+
+		element = std::move(_data.front());
+		_data.pop();
+		return true;
+	}
+	bool Empty() const
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		bool result = _data.empty();
 		return result;
 	}
-	size_t count() const
+	size_t Size() const
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		size_t count = _data.size();
 		return count;
 	}
-	void clear()
+	void Clear()
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_data.empty())

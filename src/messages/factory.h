@@ -20,11 +20,11 @@ public:
 	Factory();
 
 public:
-	void init(const device::DevicePtr &device);
-	MessagePtr create(const mavlink_message_t &mavlink);
+	void Init(const device::DevicePtr &device);
+	MessagePtr Create(const mavlink_message_t &mavlink);
 
 private:
-	void initDefaultParams(const MessagePtr &message, const mavlink_message_t &mavlink, const string &name);
+	void InitDefaultParams(const MessagePtr &message, const mavlink_message_t &mavlink, const string &name);
 };
 
 }

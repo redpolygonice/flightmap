@@ -2,8 +2,7 @@
 #define TELEBOX_H
 
 #include "common/types.h"
-
-#include <mavlink/common/mavlink.h>
+#include <atomic>
 
 namespace data
 {
@@ -16,29 +15,12 @@ class TeleBox
 {
 private:
 	std::shared_mutex _mutex;
-
-	StringList _modes = {
-		"Stabilize",
-		"Acrobatic",
-		"Alt Hold ",
-		"Auto",
-		"Guided",
-		"Loiter",
-		"RTL",
-		"Circle",
-		"Position",
-		"Land",
-		"OF_Loiter",
-		"Drift",
-		"None",
-		"Sport",
-		"Flip",
-		"Auto Tune",
-		"Pos Hold" };
+	std::atomic_bool _active = false;
 
 public:
 	// Current flight mode
 	uint32_t mode = 0;
+	time_t _hbTime = 0;
 
 	// Current mission number
 	unsigned short mission_seq = 0;
@@ -90,16 +72,22 @@ public:
 
 public:
 	TeleBox();
-	static TeleBoxPtr create() { return std::make_shared<TeleBox>(); }
-	inline void lock() { _mutex.lock_shared(); }
-	inline void unlock() { _mutex.unlock_shared(); }
-	void setMavlinkMode(uint32_t mode);
-	void setMavlinkAttitude(const mavlink_attitude_t &msg);
-	void setMavlinkVfrHud(const mavlink_vfr_hud_t &msg);
-	void setMavlinkGpsRawInt(const mavlink_gps_raw_int_t &msg);
-	void setMavlinkSysStatus(const mavlink_sys_status_t &msg);
-	void setMavlinkStatusText(const mavlink_statustext_t &msg);
-	string gpsTypeToString(GPS_FIX_TYPE type);
+
+public:
+	static TeleBoxPtr Create() { return std::make_shared<TeleBox>(); }
+	inline void Lock() { _mutex.lock_shared(); }
+	inline void Unlock() { _mutex.unlock_shared(); }
+	void Enable() { _active = true; }
+	void Disable() { _active = false; }
+	bool IsActive() const { return _active; }
+	void SetMavlinkMode(uint32_t mode);
+	void SetHbTime(time_t arg) { _hbTime = arg; }
+	void SetMavlinkAttitude(const mavlink_attitude_t &msg);
+	void SetMavlinkVfrHud(const mavlink_vfr_hud_t &msg);
+	void SetMavlinkGpsRawInt(const mavlink_gps_raw_int_t &msg);
+	void SetMavlinkSysStatus(const mavlink_sys_status_t &msg);
+	void SetMavlinkStatusText(const mavlink_statustext_t &msg);
+	string GpsTypeToString(GPS_FIX_TYPE type);
 };
 
 }

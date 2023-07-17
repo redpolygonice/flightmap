@@ -37,5 +37,7 @@
         <file>qml/MissionPoint.qml</file>
         <file>qml/MissionLine.qml</file>
         <file>img/yellow-marker.png</file>
+        <file>qml/HomePoint.qml</file>
+        <file>qml/QuadroItem.qml</file>
     </qresource>
 </RCC>

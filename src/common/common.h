@@ -6,18 +6,17 @@
 namespace common
 {
 
-string i2s(int number);
-int s2i(const string &text);
-string currentTime();
+string CurrentTime();
 string currentTimeMs();
-int64_t timestamp();
-bool isFileExists(const string &fileName);
-StringList getComPorts();
-string getCurrentDir();
-void copyFile(const string &from, const string &to);
-void createDir(const string &dir);
-bool unzip(const string &fileName, const string &destDir);
-inline void sleep(long ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
+int64_t Timestamp();
+bool IsFileExists(const string &fileName);
+StringList GetComPorts();
+string GetCurrentDir();
+void CopyFile(const string &from, const string &to);
+void CreateDir(const string &dir);
+bool Unzip(const string &fileName, const string &destDir);
+inline void Sleep(long ms) { std::this_thread::sleep_for(std::chrono::milliseconds(ms)); }
+StringList SplitString(const std::string &text, const std::string &separator);
 
 }
 

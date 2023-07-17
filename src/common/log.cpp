@@ -4,14 +4,14 @@
 namespace common
 {
 
-LoggerPtr Log::_instance = nullptr;
+LogPtr Log::_instance = nullptr;
 
 Log::Log()
 	: _active(false)
 	, _verb(Level::Info)
 	, _callback(nullptr)
 {
-	string logName = "log-" + currentTime() + ".txt";
+	string logName = "log-" + CurrentTime() + ".txt";
 	_stream.open(logName, std::ios_base::out | std::ios_base::trunc);
 	if (!_stream.is_open())
 		return;
@@ -21,15 +21,15 @@ Log::Log()
 
 	if (_async)
 	{
-		_thread = std::thread([this]() { run(); });
+		_thread = std::thread([this]() { Run(); });
 		_thread.detach();
 	}
 }
 
 Log::~Log()
 {
-	while (!_queue.isEmpty())
-		sleep(5);
+	while (!_queue.Empty())
+		Sleep(5);
 
 	_active = false;
 	if (_stream.is_open())
@@ -39,12 +39,12 @@ Log::~Log()
 	}
 }
 
-void Log::write(const std::string &text, Log::Level level)
+void Log::Write(const std::string &text, Log::Level level)
 {
 	if (level > _verb)
 		return;
 
-	string line = createLine(text, level);
+	string line = CreateLine(text, level);
 	std::cout << line << std::endl;
 	_stream << line << std::endl;
 	_stream.flush();
@@ -53,15 +53,16 @@ void Log::write(const std::string &text, Log::Level level)
 		_callback(line);
 }
 
-void Log::writeAsync(const std::string &text, Log::Level level)
+void Log::WriteAsync(const std::string &text, Log::Level level)
 {
 	if (level > _verb)
 		return;
 
-	_queue.push(std::make_shared<string>(createLine(text, level)));
+	StringPtr stringPtr = std::make_unique<string>(CreateLine(text, level));
+	_queue.Push(std::move(stringPtr));
 }
 
-std::string Log::createLine(const std::string &text, Log::Level level)
+std::string Log::CreateLine(const std::string &text, Log::Level level)
 {
 	string prefix = "";
 	switch (level)
@@ -87,11 +88,13 @@ std::string Log::createLine(const std::string &text, Log::Level level)
 	return line;
 }
 
-void Log::run()
+void Log::Run()
 {
 	while (_active)
 	{
-		StringPtr text = _queue.pop();
+		StringPtr text;
+		_queue.Pop(std::move(text));
+
 		if (text != nullptr)
 		{
 			std::cout << *text << std::endl;
@@ -102,7 +105,7 @@ void Log::run()
 				_callback(*text);
 		}
 
-		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+		std::this_thread::sleep_for(std::chrono::milliseconds(50));
 	}
 }
 

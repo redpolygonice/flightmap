@@ -15,7 +15,7 @@ public:
 
 public:
 	static MessagePtr create(const device::DevicePtr &device) { return std::make_shared<GpsMessage>(device); }
-	void execute() override;
+	void Execute() override;
 };
 
 }

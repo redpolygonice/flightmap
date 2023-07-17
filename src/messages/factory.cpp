@@ -16,12 +16,12 @@ Factory::Factory()
 {
 }
 
-void Factory::init(const device::DevicePtr &device)
+void Factory::Init(const device::DevicePtr &device)
 {
 	_device = device;
 }
 
-void Factory::initDefaultParams(const MessagePtr &message, const mavlink_message_t &mavlink, const std::string &name)
+void Factory::InitDefaultParams(const MessagePtr &message, const mavlink_message_t &mavlink, const std::string &name)
 {
 	message->_id = mavlink.msgid;
 	message->_name = name;
@@ -30,7 +30,7 @@ void Factory::initDefaultParams(const MessagePtr &message, const mavlink_message
 	message->_direction = IMessage::Direction::FromDevice;
 }
 
-MessagePtr Factory::create(const mavlink_message_t &mavlink)
+MessagePtr Factory::Create(const mavlink_message_t &mavlink)
 {
 	if (_device == nullptr)
 		return nullptr;
@@ -43,7 +43,7 @@ MessagePtr Factory::create(const mavlink_message_t &mavlink)
 		mavlink_msg_heartbeat_decode(&mavlink, &heartbeat);
 
 		message = HeartbeatMessage::create(_device);
-		initDefaultParams(message, mavlink, "heartbeat");
+		InitDefaultParams(message, mavlink, "heartbeat");
 		message->_params["mode"] = heartbeat.custom_mode;
 	}
 	else if (mavlink.msgid == MAVLINK_MSG_ID_ATTITUDE)
@@ -52,7 +52,7 @@ MessagePtr Factory::create(const mavlink_message_t &mavlink)
 		mavlink_msg_attitude_decode(&mavlink, &attitude);
 
 		message = AttitudeMessage::create(_device);
-		initDefaultParams(message, mavlink, "attitude");
+		InitDefaultParams(message, mavlink, "attitude");
 		message->_params["roll"] = static_cast<float>(attitude.roll * 180 / M_PI);
 		message->_params["pitch"] = static_cast<float>(attitude.pitch * 180 / M_PI);
 		message->_params["yaw"] = static_cast<float>(attitude.yaw * 180 / M_PI);
@@ -63,7 +63,7 @@ MessagePtr Factory::create(const mavlink_message_t &mavlink)
 		mavlink_msg_vfr_hud_decode(&mavlink, &vfr);
 
 		message = VfrMessage::create(_device);
-		initDefaultParams(message, mavlink, "vfr");
+		InitDefaultParams(message, mavlink, "vfr");
 		message->_params["airspeed"] = vfr.airspeed;
 		message->_params["groundspeed"] = vfr.groundspeed;
 		message->_params["altmsl"] = vfr.alt;
@@ -76,7 +76,7 @@ MessagePtr Factory::create(const mavlink_message_t &mavlink)
 		mavlink_msg_gps_raw_int_decode(&mavlink, &gps);
 
 		message = GpsMessage::create(_device);
-		initDefaultParams(message, mavlink, "gps");
+		InitDefaultParams(message, mavlink, "gps");
 		message->_params["lat"] = static_cast<float>(gps.lat / 10000000.0f);
 		message->_params["lon"] = static_cast<float>(gps.lon / 10000000.0f);
 		message->_params["altgps"] = static_cast<float>(gps.alt / 1000.0f);
@@ -91,7 +91,7 @@ MessagePtr Factory::create(const mavlink_message_t &mavlink)
 		mavlink_msg_sys_status_decode(&mavlink, &status);
 
 		message = SysStatusMessage::create(_device);
-		initDefaultParams(message, mavlink, "sysstatus");
+		InitDefaultParams(message, mavlink, "sysstatus");
 		message->_params["voltage_battery"] = status.voltage_battery;
 		message->_params["current_battery"] = status.current_battery;
 		message->_params["drop_rate_comm"] = status.drop_rate_comm;
@@ -104,7 +104,7 @@ MessagePtr Factory::create(const mavlink_message_t &mavlink)
 		mavlink_msg_statustext_decode(&mavlink, &status);
 
 		message = StatusTextMessage::create(_device);
-		initDefaultParams(message, mavlink, "statustext");
+		InitDefaultParams(message, mavlink, "statustext");
 		message->_params["statustext"] = string(status.text);
 	}
 	else if (mavlink.msgid == MAVLINK_MSG_ID_AUTOPILOT_VERSION)
@@ -113,7 +113,7 @@ MessagePtr Factory::create(const mavlink_message_t &mavlink)
 		mavlink_msg_autopilot_version_decode(&mavlink, &autopilotversion);
 
 		message = AutopilotVersionMessage::create(_device);
-		initDefaultParams(message, mavlink, "autopilotversion");
+		InitDefaultParams(message, mavlink, "autopilotversion");
 		message->_params["capabilities"] = autopilotversion.capabilities;
 	}
 

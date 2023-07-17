@@ -12,12 +12,12 @@ Connection::Connection(const device::DevicePtr &device)
 
 Connection::~Connection()
 {
-	stop();
+	Stop();
 }
 
-void Connection::stop()
+void Connection::Stop()
 {
-	_device->stop();
+	_device->Stop();
 	_device.reset();
 	_number = -1;
 	_active = false;

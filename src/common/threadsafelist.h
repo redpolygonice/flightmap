@@ -20,14 +20,14 @@ public:
 
 public:
 	typedef typename std::list<T>::iterator iterator;
-	iterator begin() { return _data.begin(); }
-	iterator end() { return _data.end(); }
-	void push(const T &element)
+	iterator Begin() { return _data.begin(); }
+	iterator End() { return _data.end(); }
+	void Push(const T &element)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		_data.push_back(element);
 	}
-	T front()
+	T Front()
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_data.empty())
@@ -36,7 +36,7 @@ public:
 		T element = _data.front();
 		return element;
 	}
-	T pop()
+	T Pop()
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_data.empty())
@@ -46,7 +46,7 @@ public:
 		_data.pop_front();
 		return element;
 	}
-	void remove(const T &element)
+	void Remove(const T &element)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_data.empty())
@@ -54,19 +54,19 @@ public:
 
 		_data.remove(element);
 	}
-	bool isEmpty() const
+	bool Empty() const
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		bool result = _data.empty();
 		return result;
 	}
-	size_t count() const
+	size_t Size() const
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		size_t count = _data.size();
 		return count;
 	}
-	void clear()
+	void Clear()
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
 		if (_data.empty())

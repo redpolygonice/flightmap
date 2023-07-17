@@ -1,4 +1,5 @@
 #include "telebox.h"
+#include "common/devicetypes.h"
 
 namespace data
 {
@@ -7,14 +8,14 @@ TeleBox::TeleBox()
 {
 }
 
-void TeleBox::setMavlinkAttitude(const mavlink_attitude_t &msg)
+void TeleBox::SetMavlinkAttitude(const mavlink_attitude_t &msg)
 {
 	roll = static_cast<float>(msg.roll * 180 / M_PI);
 	pitch = static_cast<float>(msg.pitch * 180 / M_PI);
 	yaw = static_cast<float>(msg.yaw * 180 / M_PI);
 }
 
-void TeleBox::setMavlinkVfrHud(const mavlink_vfr_hud_t &msg)
+void TeleBox::SetMavlinkVfrHud(const mavlink_vfr_hud_t &msg)
 {
 	airspeed = msg.airspeed;
 	groundspeed = msg.groundspeed;
@@ -24,7 +25,7 @@ void TeleBox::setMavlinkVfrHud(const mavlink_vfr_hud_t &msg)
 	alt = altmsl - homealt;
 }
 
-void TeleBox::setMavlinkGpsRawInt(const mavlink_gps_raw_int_t &msg)
+void TeleBox::SetMavlinkGpsRawInt(const mavlink_gps_raw_int_t &msg)
 {
 	lat = static_cast<float>(msg.lat / 10000000.0f);
 	lon = static_cast<float>(msg.lon / 10000000.0f);
@@ -33,10 +34,10 @@ void TeleBox::setMavlinkGpsRawInt(const mavlink_gps_raw_int_t &msg)
 	epv = msg.epv / 100;
 	fix_type = msg.fix_type;
 	satellites_visible = msg.satellites_visible;
-	gpstype = gpsTypeToString(static_cast<GPS_FIX_TYPE>(fix_type));
+	gpstype = GpsTypeToString(static_cast<GPS_FIX_TYPE>(fix_type));
 }
 
-void TeleBox::setMavlinkSysStatus(const mavlink_sys_status_t &msg)
+void TeleBox::SetMavlinkSysStatus(const mavlink_sys_status_t &msg)
 {
 	voltage_battery = msg.voltage_battery;
 	current_battery = msg.current_battery;
@@ -45,17 +46,17 @@ void TeleBox::setMavlinkSysStatus(const mavlink_sys_status_t &msg)
 	battery_remaining = msg.battery_remaining;
 }
 
-void TeleBox::setMavlinkStatusText(const mavlink_statustext_t &msg)
+void TeleBox::SetMavlinkStatusText(const mavlink_statustext_t &msg)
 {
 	statustext = msg.text;
 }
 
-void TeleBox::setMavlinkMode(uint32_t mode)
+void TeleBox::SetMavlinkMode(uint32_t mode)
 {
-	flightmode = _modes[mode];
+	flightmode = common::kFlightNodes[mode];
 }
 
-string TeleBox::gpsTypeToString(GPS_FIX_TYPE type)
+string TeleBox::GpsTypeToString(GPS_FIX_TYPE type)
 {
 	string text = "";
 	switch (type)

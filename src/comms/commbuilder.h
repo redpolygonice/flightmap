@@ -13,7 +13,7 @@ class CommBuilder
 {
 public:
 	CommBuilder();
-	CommunicationPtr create(const common::ConnectParams &params);
+	CommunicationPtr Create(const common::ConnectParams &params);
 };
 
 }

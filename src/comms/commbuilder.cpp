@@ -14,7 +14,7 @@ CommBuilder::CommBuilder()
 {
 }
 
-CommunicationPtr CommBuilder::create(const common::ConnectParams &params)
+CommunicationPtr CommBuilder::Create(const common::ConnectParams &params)
 {
 	CommunicationPtr comm = nullptr;
 
@@ -46,7 +46,7 @@ CommunicationPtr CommBuilder::create(const common::ConnectParams &params)
 	}
 
 	// Try to open device
-	if (!comm->open())
+	if (!comm->Open())
 	{
 		LOGE("[CommBuilder] Can't open connection!");
 		comm.reset();

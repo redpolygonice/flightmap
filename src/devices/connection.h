@@ -18,7 +18,7 @@ typedef std::vector<ConnectionPtr>::const_iterator ConnectionListConstIterator;
 // Connection object
 class Connection
 {
-	friend class ConnectionManager;
+	friend class DeviceManager;
 
 private:
 	device::DevicePtr _device;
@@ -30,11 +30,11 @@ public:
 	~Connection();
 
 public:
-	static ConnectionPtr create(const device::DevicePtr &device) { return std::make_shared<Connection>(device); }
-	void stop();
-	device::DevicePtr device() const { return _device; }
-	int number() const { return _number; }
-	bool isActive() const { return _active; }
+	static ConnectionPtr Create(const device::DevicePtr &device) { return std::make_shared<Connection>(device); }
+	void Stop();
+	device::DevicePtr GetDevice() const { return _device; }
+	int Number() const { return _number; }
+	bool IsActive() const { return _active; }
 };
 
 }

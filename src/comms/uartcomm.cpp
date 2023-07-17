@@ -21,10 +21,10 @@ UartComm::~UartComm()
 {
 }
 
-bool UartComm::open()
+bool UartComm::Open()
 {
 	string dev = _connectParams.protocol;
-	setBaudRate(_connectParams.baudrate);
+	SetBaudRate(_connectParams.baudrate);
 
 #ifdef WIN32
 	string fileName = dev; // "\\\\.\\" + dev;
@@ -142,7 +142,7 @@ bool UartComm::open()
 #endif
 }
 
-void UartComm::close()
+void UartComm::Close()
 {
 	_active = false;
 	if (_thread.joinable())
@@ -155,14 +155,14 @@ void UartComm::close()
 #endif
 }
 
-void UartComm::start(const ReadFunction &callback)
+void UartComm::Start(const ReadFunction &callback)
 {
 	_callback = callback;
 	_active = true;
 	_thread = std::thread([this]() { run(); });
 }
 
-bool UartComm::write(const unsigned char *buffer, size_t size)
+bool UartComm::Write(const unsigned char *buffer, size_t size)
 {
 #ifdef WIN32
 	DWORD dwBytesWritten = 0;
@@ -223,7 +223,7 @@ void UartComm::run()
 }
 
 #ifndef WIN32
-void UartComm::setBaudRate(uint32_t rate)
+void UartComm::SetBaudRate(uint32_t rate)
 {
 	_baudrate = B57600;
 	switch (rate)

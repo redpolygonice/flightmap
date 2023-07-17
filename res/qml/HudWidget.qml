@@ -7,9 +7,12 @@ Rectangle {
 	visible: true
 	width: 150
 	height: 150
-	color: "#000000"
+	color: backColor
 	border.width: 2
 	border.color: "#ffffff"
+	radius: 10
+
+	property color backColor: "#172839"
 
 	MouseArea {
 		id: mouseArea

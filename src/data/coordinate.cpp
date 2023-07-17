@@ -26,17 +26,17 @@ Coordinate::Coordinate(const Coordinate &other)
 
 void Coordinate::operator=(const Coordinate &other)
 {
-	_lat = other.lat();
-	_lon = other.lon();
-	_alt = other.alt();
+	_lat = other.Lat();
+	_lon = other.Lon();
+	_alt = other.Alt();
 }
 
-double Coordinate::distanceTo(const CoordinatePtr &point) const
+double Coordinate::DistanceTo(const CoordinatePtr &point) const
 {
 	double d = _lat * 0.017453292519943295;
 	double num2 = _lon * 0.017453292519943295;
-	double num3 = point->lat() * 0.017453292519943295;
-	double num4 = point->lon() * 0.017453292519943295;
+	double num3 = point->Lat() * 0.017453292519943295;
+	double num4 = point->Lon() * 0.017453292519943295;
 	double num5 = num4 - num2;
 	double num6 = num3 - d;
 	double num7 = std::pow(std::sin(num6 / 2.0), 2.0) + (std::cos(d) * std::cos(num3)) * std::pow(std::sin(num5 / 2.0), 2.0);
@@ -44,7 +44,7 @@ double Coordinate::distanceTo(const CoordinatePtr &point) const
 	return (6371 * num8) * 1000.0;
 }
 
-double Coordinate::azimuthTo(const CoordinatePtr &point) const
+double Coordinate::AzimuthTo(const CoordinatePtr &point) const
 {
 //	QGeoCoordinate FlightGeoRoute::toGeoCoordinate(const QGeoCoordinate &origin, const QPointF &point)
 //	{
@@ -57,10 +57,16 @@ double Coordinate::azimuthTo(const CoordinatePtr &point) const
 	return 0.0;
 }
 
-CoordinatePtr Coordinate::atDistanceAndAzimuth(double distance, double azimuth, double distanceUp) const
+CoordinatePtr Coordinate::AtDistanceAndAzimuth(double distance, double azimuth, double distanceUp) const
 {
-	CoordinatePtr coord = Coordinate::create();
+	CoordinatePtr coord = Coordinate::Create();
 	return coord;
+}
+
+bool Coordinate::IsEqual(const CoordinatePtr &point) const
+{
+	return std::fabs(Lat() - point->Lat()) <= std::numeric_limits<double>::epsilon() &&
+			std::fabs(Lon() - point->Lon()) <= std::numeric_limits<double>::epsilon();
 }
 
 }

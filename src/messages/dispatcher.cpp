@@ -11,63 +11,36 @@ Dispatcher::Dispatcher()
 
 Dispatcher::~Dispatcher()
 {
-	stop();
+	Stop();
 }
 
-void Dispatcher::start()
+void Dispatcher::Start()
 {
 	_active = true;
-	_thread = std::thread([this]() { run(); });
+	_thread = std::thread([this]() { Run(); });
 }
 
-void Dispatcher::stop()
+void Dispatcher::Stop()
 {
 	_active = false;
-	_buffer.clear();
+	_buffer.Clear();
 
 	if (_thread.joinable())
 		_thread.join();
 }
 
-void Dispatcher::add(const MessagePtr &message)
+void Dispatcher::Add(const MessagePtr &message)
 {
-	_buffer.push(message);
+	_buffer.Push(message);
 }
 
-void Dispatcher::run()
+void Dispatcher::Run()
 {
-	common::ThreadSafeList<MessagePtr>::iterator it;
 	while (_active)
 	{
-//		for (it = _buffer.begin(); it != _buffer.end(); ++it)
-//		{
-//			MessagePtr message = *it;
-
-//			if (message->state() == IMessage::State::Idle)
-//			{
-//				message->executeAsync();
-//				LOGD("[Dispatcher] Message id: " << message->id());
-//			}
-//			else if (message->state() == IMessage::State::Done)
-//			{
-//				LOGD("[Dispatcher] Message Done id: " << message->id());
-//				_buffer.remove(message);
-//				break;
-//			}
-//			else if (message->state() == IMessage::State::Error)
-//			{
-//				LOGE("[Dispatcher] Message error, id: " << message->name() << ", error: " << message->error());
-//				_buffer.remove(message);
-//				break;
-//			}
-//		}
-
-		MessagePtr message = _buffer.pop();
+		MessagePtr message = _buffer.Pop();
 		if (message != nullptr)
-		{
-			message->executeAsync();
-			//LOGD("[Dispatcher] Message id: " << message->id());
-		}
+			message->ExecuteAsync();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}

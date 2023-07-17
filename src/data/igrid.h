@@ -16,7 +16,9 @@ public:
 	virtual ~IGrid() {}
 
 public:
-	virtual bool create(const CoordinateList &markers, CoordinateList &mission, const common::AnyMap &params) = 0;
+	virtual bool Create(const CoordinateList &markers, CoordinateList &mission, const common::AnyMap &params) = 0;
+	virtual bool LoadFile(const string &fileName, CoordinateList &points, common::AnyMap &params) = 0;
+	virtual bool SaveFile(const string &fileName, const CoordinateList &points, const common::AnyMap &params) = 0;
 };
 
 typedef std::shared_ptr<IGrid> GridPtr;

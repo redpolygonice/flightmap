@@ -2,34 +2,48 @@
 #define RASPI_H
 
 #include "common/types.h"
-#include "devices/idevice.h"
+#include "devices/flightdevice.h"
 #include "comms/icommunication.h"
+#include "messages/factory.h"
 
 namespace device
 {
 
-// Raspberry Pi device
-class Raspi : public IDevice
+// Rapberry Pi device
+class Raspi : public FlightDevice
 {
 private:
 	std::atomic_bool _active;
+	std::thread _heartbeatThread;
+	std::thread _processThread;
+
+	std::mutex _mutexData;
+	std::vector<unsigned char> _data;
+
+	message::Factory _messageFactory;
+	std::vector<int> _missionTypes;
 
 public:
 	Raspi(const comms::CommunicationPtr &comm);
 	virtual ~Raspi();
 
+	Raspi(const Raspi&) = delete;
+	Raspi(Raspi&&) = delete;
+	Raspi& operator=(const Raspi&) = delete;
+	Raspi& operator=(Raspi&&) = delete;
+
 public:
-	static DevicePtr create(const comms::CommunicationPtr &comm) { return std::make_shared<Raspi>(comm); }
-	bool start() override;
-	void stop() override;
-	void sendCommand(uint16_t cmd, float param1 = 0, float param2 = 0, float param3 = 0, float param4 = 0,
-							 float param5 = 0, float param6 = 0, float param7 = 0) override;
-	void sendCommandInt(uint16_t cmd, float param1 = 0, float param2 = 0, float param3 = 0, float param4 = 0,
-								 float x = 0, float y = 0, float z = 0) override;
-	bool createMission(const data::CoordinateList &points, data::CoordinateList &mission, const common::AnyMap &params) override;
-	void clearMission() override;
-	void writeMission(const data::CoordinateList &points, const common::AnyMap &params) override;
-	void readMission(data::CoordinateList &points) override;
+	static DevicePtr Create(const comms::CommunicationPtr &comm) { return std::make_shared<Raspi>(comm); }
+	string Name() const override;
+	bool Start() override;
+	void Stop() override;
+	bool WaitHeartbeat() override;
+
+private:
+	void StartHeartbeat();
+	bool RequestData();
+	void ReadData(const ByteArray &data);
+	bool ProcessData();
 };
 
 }

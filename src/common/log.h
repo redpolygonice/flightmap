@@ -19,14 +19,12 @@ namespace common
 {
 
 class Log;
-typedef std::shared_ptr<Log> LoggerPtr;
+typedef std::shared_ptr<Log> LogPtr;
 
 // Logging class
 class Log
 {
 public:
-	Log();
-	~Log();
 	enum class Level
 	{
 		Critical,
@@ -37,7 +35,7 @@ public:
 	};
 
 private:
-	static LoggerPtr _instance;
+	static LogPtr _instance;
 	bool _async = true;
 	std::atomic_bool _active;
 	Level _verb;
@@ -47,43 +45,52 @@ private:
 	LogFunction _callback;
 
 public:
-	void setVerbosity(Level level) { _verb = level; }
-	void write(const string &text, Log::Level level = Log::Level::Info);
-	void writeAsync(const string &text, Log::Level level = Log::Level::Info);
-	void setCallback(const LogFunction &callback) { _callback = callback; }
+	Log();
+	~Log();
 
-	static LoggerPtr create()
+public:
+	void SetVerbosity(Level level) { _verb = level; }
+	void Write(const string &text, Log::Level level = Log::Level::Info);
+	void WriteAsync(const string &text, Log::Level level = Log::Level::Info);
+	void SetCallback(const LogFunction &callback) { _callback = callback; }
+
+	static LogPtr Create()
 	{
 		if (_instance == nullptr)
 			_instance = std::make_shared<Log>();
 		return _instance;
 	}
 
-	static void close()
+	static LogPtr Instance()
+	{
+		return Create();
+	}
+
+	static void Close()
 	{
 		_instance.reset();
 		_instance = nullptr;
 	}
 
-	static void put(const string &text, Log::Level level)
+	static void Put(const string &text, Log::Level level)
 	{
 		if (_instance->_async)
-			_instance->writeAsync(text, level);
+			_instance->WriteAsync(text, level);
 		else
-			_instance->write(text, level);
+			_instance->Write(text, level);
 	}
 
-	static void setVerb(Level level)
+	static void SetVerb(Level level)
 	{
-		_instance->setVerbosity(level);
+		_instance->SetVerbosity(level);
 	}
 
 private:
-	void run();
-	string createLine(const string &text, Log::Level level);
+	void Run();
+	string CreateLine(const string &text, Log::Level level);
 };
 
-inline void log(const string &text, Log::Level level = Log::Level::Info) { Log::put(text, level); }
+inline void log(const string &text, Log::Level level = Log::Level::Info) { Log::Put(text, level); }
 inline void logw(const string &text) { log(text, Log::Level::Warning); }
 inline void loge(const string &text) { log(text, Log::Level::Error); }
 inline void logc(const string &text) { log(text, Log::Level::Critical); }

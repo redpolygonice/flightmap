@@ -9,14 +9,13 @@ Map {
 	zoomLevel: 16
 
 	property variant homePoint: null
-	property bool isMissionCreated: false
+	property bool missionCreated: false
 	property bool isMission: false
-	property bool isPolygon: false
-	property variant quadro: null
 	property alias telemetryWidget: telemetryWidgetId;
 	property alias hudWidget: hudWidgetId;
 	property alias controlWidget: controlWidgetId;
 	property alias missionWidget: missionWidgetId;
+	property variant quadrolist: []
 
 	Component.onCompleted: {
 		homePoint = QtPositioning.coordinate(proxy.parameters["mapLat"], proxy.parameters["mapLon"])
@@ -29,6 +28,23 @@ Map {
 		proxy.onMissionPointsChanged.connect(function() {
 			drawMission()
 		})
+
+		proxy.onMapZoomChanged.connect(function(zoom) {
+			zoomLevel = zoom
+			footerZoom.text = "Zoom: " + mapId.zoomLevel.toFixed(1)
+		})
+
+		if (mainWindow.telemetryParams === null)
+			showHideWidget(telemetryWidget, telemetryButton)
+
+		if (mainWindow.hudParams === null)
+			showHideWidget(hudWidget, hudButton)
+
+		if (mainWindow.controlParams === null)
+			showHideWidget(controlWidget, controlButton)
+
+		if (mainWindow.missionParams === null)
+			showHideWidget(missionWidget, missionButton)
 	}
 
 	LocationWidget {
@@ -74,7 +90,7 @@ Map {
 	MapPolygon {
 		id: polygon
 		border.width: 3
-		border.color: 'red'
+		border.color: 'yellow'
 		opacity: 0.7
 	}
 
@@ -105,6 +121,7 @@ Map {
 	MouseArea {
 		anchors.fill: parent
 		hoverEnabled: true
+		propagateComposedEvents: true
 		cursorShape: {
 			isMission ? Qt.CrossCursor : Qt.ArrowCursor
 		}
@@ -122,6 +139,58 @@ Map {
 		}
 	}
 
+	Keys.onPressed: {
+		proxy.processKeyDown(event.key)
+		event.accepted = true
+	}
+
+	Keys.onReleased: {
+		if (!event.isAutoRepeat)
+			proxy.processKeyUp(event.key)
+		event.accepted = true
+	}
+
+	function getCoordinate(x, y)
+	{
+		return mapId.toCoordinate(Qt.point(x, y))
+	}
+
+	function setCoordinate(item, x, y)
+	{
+		for (var i = 0; i < mapItems.length; ++i)
+		{
+			if (item === mapItems[i])
+			{
+				var coord = mapItems[i].coordinate
+				coord.altitude = proxy.computeAlt(coord.latitude, coord.longitude,
+												  missionWidget.altCheck.checked, missionWidget.altType.currentIndex, missionWidget.alt.value)
+
+				for (var j = 0; j < redLine.path.length; ++j)
+				{
+					if (redLine.path[j] === mapItems[i].fixedCoord)
+					{
+						redLine.replaceCoordinate(j, coord)
+						break
+					}
+				}
+
+				for (var k = 0; k < yellowLine.path.length; ++k)
+				{
+					if (yellowLine.path[k] === mapItems[i].fixedCoord)
+					{
+						yellowLine.replaceCoordinate(k, coord)
+						break
+					}
+				}
+
+				mapItems[i].fixedCoord = coord
+				proxy.updateMissionPoint(coord, mapItems[i].number - 1)
+				locationWidget.setMissionDistance(proxy.missionPoints)
+				break
+			}
+		}
+	}
+
 	function addMarker(x, y)
 	{
 		var item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; MapQuickItem {
@@ -129,9 +198,10 @@ Map {
 		item.coordinate = mapId.toCoordinate(Qt.point(x, y))
 		item.anchorPoint.x = item.sourceItem.width / 2
 		item.anchorPoint.y = item.sourceItem.height
+		item.opacity = 0.7
 		mapId.addMapItem(item)
 
-		if (isPolygon)
+		if (missionWidget.polygon)
 			polygon.addCoordinate(item.coordinate)
 		else
 			yellowLine.addCoordinate(item.coordinate)
@@ -140,42 +210,118 @@ Map {
 	function addItem(coordinate)
 	{
 		var item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; MapQuickItem {
-			opacity: 0.7; sourceItem: Image { id: image; source: "qrc:/img/green-marker.png"; }}', mapId, 'dynamic')
-		item.coordinate = coordinate
+			opacity: 0.7; sourceItem: Image { id: image; source: "qrc:/img/yellow-marker.png"; }}', mapId, 'dynamic')
+		item.coordinate.latitude = coordinate['lat']
+		item.coordinate.longitude = coordinate['lon']
+		item.coordinate.altitude = coordinate['alt']
 		item.anchorPoint.x = item.sourceItem.width / 2
 		item.anchorPoint.y = item.sourceItem.height
+		item.opacity = 0.7
 		mapId.addMapItem(item)
 
-		if (isPolygon)
+		if (missionWidget.polygon)
 			polygon.addCoordinate(item.coordinate)
 		else
 			redLine.addCoordinate(item.coordinate)
 	}
 
-	function addPoint(number, coordinate)
+	function addMissionPoint(number, coordinate)
 	{
 		var item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; MissionPoint { }', mapId, 'dynamic')
-		item.coordinate = coordinate
+		item.coordinate.latitude = coordinate['lat']
+		item.coordinate.longitude = coordinate['lon']
+		item.coordinate.altitude = coordinate['alt']
+		item.fixedCoord = item.coordinate
 		item.anchorPoint.x = item.sourceItem.width / 2
 		item.anchorPoint.y = item.sourceItem.height / 2
+		item.opacity = 0.7
 		item.number = number
+		item.map = mapId
 		mapId.addMapItem(item)
 	}
 
-
-	function addQuadro(lat, lon)
+	function addHomePoint(coordinate)
 	{
-		if (quadro)
+		var item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; HomePoint { }', mapId, 'dynamic')
+		item.coordinate.latitude = coordinate['lat']
+		item.coordinate.longitude = coordinate['lon']
+		item.coordinate.altitude = coordinate['alt']
+		item.anchorPoint.x = item.sourceItem.width / 2
+		item.anchorPoint.y = item.sourceItem.height / 2
+		item.opacity = 0.7
+		item.number = 1
+		mapId.addMapItem(item)
+	}
+
+	function createQuadro(number)
+	{
+		homePin.visible = false
+
+		var item = findQuadro(number)
+		if (item === null)
 		{
-			mapId.removeMapItem(quadro)
-			quadro.destroy()
+
+			item = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; QuadroItem { }', mapId, 'dynamic')
+			item.anchorPoint.x = item.sourceItem.width / 2
+			item.anchorPoint.y = item.sourceItem.height / 2
+			item.number = number
+			item.active = active
+			mapId.addMapItem(item)
+			quadrolist.push(item)
+			setActiveQuadro(number)
 		}
 
-		quadro = Qt.createQmlObject('import QtQuick 2.12; import QtLocation 5.6; MapQuickItem { sourceItem: Image { id: image; source: "qrc:/img/quadro.png"; }}', mapId, 'dynamic')
-		quadro.coordinate = QtPositioning.coordinate(lat, lon)
-		quadro.anchorPoint.x = quadro.sourceItem.width / 2
-		quadro.anchorPoint.y = quadro.sourceItem.height
-		mapId.addMapItem(quadro)
+		return item
+	}
+
+	function activeQuadro()
+	{
+		var item = quadrolist.find(function(element) {
+			return element.active === true
+		});
+
+		if (item !== undefined)
+			return item
+		return null
+	}
+
+	function setActiveQuadro(number)
+	{
+		quadrolist.forEach(element => {
+			if (element.number === number)
+				element.active = true
+			else
+				element.active = false
+			element.repaint()
+		})
+	}
+
+	function findQuadro(number)
+	{
+		var item = quadrolist.find(function(element) {
+			return element.number === number
+		});
+
+		if (item !== undefined)
+			return item
+		return null
+	}
+
+	function removeQuadro(number)
+	{
+		var index = quadrolist.findIndex(function(element) {
+			return element.number === number
+		});
+
+		if (index >= 0)
+		{
+			mapId.removeMapItem(quadrolist[index])
+			quadrolist[index].destroy()
+			quadrolist.splice(index, 1)
+		}
+
+		if (quadrolist.length === 0)
+			homePin.visible = true
 	}
 
 	function showHideWidget(widget, button)
@@ -217,7 +363,7 @@ Map {
 		var i = 0
 		while (i < mapItems.length) {
 			var item = mapItems[i]
-			if (item !== homePin && item !== polygon && item !== redLine && item !== yellowLine)
+			if (item !== homePin && item !== polygon && item !== redLine && item !== yellowLine && !quadrolist.includes(item))
 				removeMapItem(item)
 			else
 				i = i + 1
@@ -238,21 +384,15 @@ Map {
 		locationWidget.setMissionDistance(null)
 	}
 
-	function createMission(isPolygon)
+	function createMission()
 	{
-		var params = { "polygon": isPolygon,
-			"homeLat": homePoint.latitude,
-			"homeLon": homePoint.longitude,
-			"alt": missionWidget.alt.value,
-			"altType": missionWidget.altType.currentIndex,
-			"altCheck": missionWidget.altCheck.checked,
-			"missionStep": missionWidget.missionStep.value,
-			"horizStep": missionWidget.horizStep.value,
-			"horizStepCheck": missionWidget.horizStepCheck.checked,
-			"vertStep": missionWidget.vertStep.value,
-			"vertStepCheck": missionWidget.vertStepCheck.checked }
+		var quadro = activeQuadro()
+		if (quadro !== null)
+			homePoint = quadro.coordinate
 
-		if (isPolygon)
+		var params = missionWidget.getParams()
+
+		if (missionWidget.polygon)
 		{
 			if (polygon.path.length <= 1)
 			{
@@ -273,6 +413,7 @@ Map {
 			proxy.createMission(yellowLine.path, params)
 		}
 
+		proxy.log("Mission created!")
 		return true
 	}
 
@@ -283,29 +424,77 @@ Map {
 
 	function drawMission()
 	{
+		if (missionWidget.polygon === true)
+			drawMissionPolygon()
+		else
+			drawMissionPoints()
+
+		missionCreated = true
+		locationWidget.setMissionDistance(proxy.missionPoints)
+	}
+
+	function drawMissionPoints()
+	{
 		clearAll()
 
 		var points = proxy.missionPoints
 		if (points.length === 0)
 			return
 
-		for (var i = 0; i < points.length; i++)
+		var count = 0
+		for (var i = 0; i < points.length - 1; i++)
 		{
-			addPoint(i + 1, points[i])
+			count++
+			var point = points[i];
+			if (i === 0)
+				addHomePoint(point)
+			else
+				addMissionPoint(count, point)
 
 			if (i !== 0 && i !== points.length - 1)
+				redLine.addCoordinate(QtPositioning.coordinate(point['lat'], point['lon'], point['alt']))
+		}
+
+		yellowLine.addCoordinate(QtPositioning.coordinate(points[points.length - 2]['lat'], points[points.length - 2]['lon'], points[points.length - 2]['alt']))
+		yellowLine.addCoordinate(QtPositioning.coordinate(points[0]['lat'], points[0]['lon'], points[0]['alt']))
+		yellowLine.addCoordinate(QtPositioning.coordinate(points[1]['lat'], points[1]['lon'], points[1]['alt']))
+	}
+
+	function drawMissionPolygon()
+	{
+		clearAll()
+
+		var points = proxy.missionPoints
+		if (points.length === 0)
+			return
+
+		// First draw base points
+		var baseCount = 0
+		for (var i = 0; i < points.length; i++)
+		{
+			var point = points[i];
+			if (point['base'])
 			{
-				if (isPolygon)
-					polygon.addCoordinate(points[i])
-				else
-					redLine.addCoordinate(points[i])
+				addItem(point)
+				baseCount++
 			}
 		}
 
-		yellowLine.addCoordinate(points[points.length - 2])
-		yellowLine.addCoordinate(points[0])
-		yellowLine.addCoordinate(points[1])
+		// Draw mission grid points
+		var count = 0
+		for (var i = 0; i < points.length - baseCount; i++)
+		{
+			var point = points[i];
+			if (point['base'])
+				continue
 
-		locationWidget.setMissionDistance(points)
+			count++
+			if (i === 0)
+				addHomePoint(point)
+			else if (i !== points.length - baseCount - 1)
+				addMissionPoint(count, point)
+
+			redLine.addCoordinate(QtPositioning.coordinate(point['lat'], point['lon'], point['alt']))
+		}
 	}
 }

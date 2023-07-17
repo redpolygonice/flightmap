@@ -15,9 +15,12 @@ Rectangle {
 			return 540
 	}
 	height: 28
-	color: "#000000"
+	color: backColor
 	border.width: 2
 	border.color: "#ffffff"
+	radius: 10
+
+	property color backColor: "#172839"
 
 	property real homeDistance: 0.0
 	property real missionDistance: 0.0
@@ -197,7 +200,15 @@ Rectangle {
 		{
 			var distance = 0.0
 			for (var i = 0; i < points.length - 1; i++)
-				distance = distance + points[i].distanceTo(points[i + 1])
+			{
+				if (points[i]['base'])
+					continue
+
+				var startPoint = QtPositioning.coordinate(points[i]['lat'], points[i]['lon'], points[i]['alt'])
+				var endPoint = QtPositioning.coordinate(points[i + 1]['lat'], points[i + 1]['lon'], points[i + 1]['alt'])
+				distance = distance + startPoint.distanceTo(endPoint)
+			}
+
 			textMission.text = (distance / 1000).toFixed(2) + " km"
 		}
 	}

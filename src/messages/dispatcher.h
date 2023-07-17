@@ -19,7 +19,7 @@ private:
 	common::ThreadSafeList<MessagePtr> _buffer;
 
 private:
-	void run();
+	void Run();
 
 private:
 	Dispatcher();
@@ -28,9 +28,9 @@ public:
 	~Dispatcher();
 
 public:
-	void start();
-	void stop();
-	void add(const MessagePtr &message);
+	void Start();
+	void Stop();
+	void Add(const MessagePtr &message);
 };
 
 }

@@ -7,9 +7,24 @@ import QtPositioning 5.6
 MapQuickItem {
 	id: missionPoint
 	property int number: 0
+	property variant map: null
+	property variant fixedCoord: null
 
 	Component.onCompleted: {
 		canvas.requestPaint()
+	}
+
+	MouseArea {
+		id: mouseArea
+		anchors.fill: parent
+		hoverEnabled: true
+		cursorShape: Qt.PointingHandCursor
+		drag.target: parent
+		propagateComposedEvents: true
+
+		onReleased: {
+			map.setCoordinate(parent, parent.x + parent.width / 2, parent.y + parent.height / 2)
+		}
 	}
 
 	sourceItem: Item {
@@ -22,13 +37,6 @@ MapQuickItem {
 		ToolTip.visible: mouseArea.containsMouse
 		ToolTip.text: "Alt: " + coordinate.altitude.toFixed(1)
 
-		MouseArea {
-			id: mouseArea
-			anchors.fill: parent
-			hoverEnabled: true
-			cursorShape: Qt.PointingHandCursor
-		}
-
 		Canvas {
 			id: canvas
 			anchors.fill: parent
@@ -36,7 +44,7 @@ MapQuickItem {
 			onPaint: {
 				var context = getContext("2d");
 				context.strokeStyle = "red"
-				context.fillStyle = "green";
+				context.fillStyle = "darkGreen";
 				context.lineWidth = 3;
 				context.beginPath();
 				context.ellipse(3, 3, 23, 23)

@@ -1,9 +1,7 @@
 #ifndef MISSIONITEM_H
 #define MISSIONITEM_H
 
-#include "icoordinate.h"
-#include <mavlink/common/mavlink.h>
-#include <vector>
+#include "common/types.h"
 
 namespace data
 {
@@ -15,7 +13,9 @@ struct MissionItem
 	float param2;
 	float param3;
 	float param4;
-	CoordinatePtr point;
+	double lat;
+	double lon;
+	double alt;
 };
 
 typedef std::vector<MissionItem> MissionItemList;

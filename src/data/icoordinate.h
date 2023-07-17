@@ -20,18 +20,19 @@ public:
 	virtual ~ICoordinate() {}
 
 public:
-	void setBasePoint(bool arg = true) { _basePoint = arg; }
-	bool isBasePoint() const { return _basePoint; }
-	virtual double lat() const = 0;
-	virtual double lon() const = 0;
-	virtual double alt() const = 0;
-	virtual void setLat(double lat) = 0;
-	virtual void setLon(double lon) = 0;
-	virtual void setAlt(double alt) = 0;
-	virtual double distanceTo(const CoordinatePtr &point) const = 0;
-	virtual double azimuthTo(const CoordinatePtr &point) const = 0;
-	virtual CoordinatePtr atDistanceAndAzimuth(double distance, double azimuth, double distanceUp = 0.0) const = 0;
-	virtual bool isEmpty() const = 0;
+	virtual void SetBasePoint(bool arg = true) { _basePoint = arg; }
+	virtual bool IsBasePoint() const { return _basePoint; }
+	virtual double Lat() const = 0;
+	virtual double Lon() const = 0;
+	virtual double Alt() const = 0;
+	virtual void SetLat(double lat) = 0;
+	virtual void SetLon(double lon) = 0;
+	virtual void SetAlt(double alt) = 0;
+	virtual double DistanceTo(const CoordinatePtr &point) const = 0;
+	virtual double AzimuthTo(const CoordinatePtr &point) const = 0;
+	virtual CoordinatePtr AtDistanceAndAzimuth(double distance, double azimuth, double distanceUp = 0.0) const = 0;
+	virtual bool IsEmpty() const = 0;
+	virtual bool IsEqual(const CoordinatePtr &point) const { return false; }
 };
 
 typedef std::vector<CoordinatePtr> CoordinateList;

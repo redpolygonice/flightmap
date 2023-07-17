@@ -6,6 +6,9 @@
 namespace comms
 {
 
+#define CONNECT_TIMEOUT 1000
+#define CONNECT_COUNT 50
+
 // Socket interface
 class ISocket
 {

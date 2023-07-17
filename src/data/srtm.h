@@ -18,14 +18,21 @@ private:
 	string _dataPath;
 
 private:
-	string getFilename(float lat, float lon);
-	bool copyFile(const string &fileName) const;
-	float getAlt(string filename, int x, int y);
-	float avg(float v1, float v2, float weight);
+	string GetFileName(float lat, float lon);
+	bool CopyFile(const string &fileName) const;
+	float GetAlt(string filename, int x, int y);
+	float Avg(float v1, float v2, float weight);
 
 public:
 	Srtm();
-	float getAltitude(float lat, float lon, float zoom = 16);
+
+	Srtm(const Srtm&) = delete;
+	Srtm(Srtm&&) = delete;
+	Srtm& operator=(const Srtm&) = delete;
+	Srtm& operator=(Srtm&&) = delete;
+
+public:
+	float GetAltitude(float lat, float lon, float zoom = 16);
 };
 
 }

@@ -2,15 +2,27 @@
 #define MOCK_H
 
 #include "common/types.h"
-#include "devices/idevice.h"
+#include "devices/flightdevice.h"
 #include "comms/icommunication.h"
+#include "messages/factory.h"
+#include "common/threadsafequeue.h"
 
 namespace device
 {
 
 // Mock device
-class Mock : public IDevice, public std::enable_shared_from_this<Mock>
+class Mock : public FlightDevice
 {
+private:
+	std::atomic_bool _active;
+	std::thread _processThread;
+	common::ThreadSafeQueue<ByteArrayPtr> _data;
+	message::Factory _messageFactory;
+
+private:
+	void ProcessData();
+	void ReadData(const ByteArray &data);
+
 public:
 	Mock(const comms::CommunicationPtr &comm);
 	virtual ~Mock();
@@ -21,18 +33,10 @@ public:
 	Mock& operator=(Mock&&) = delete;
 
 public:
-	static DevicePtr create(const comms::CommunicationPtr &comm) { return std::make_shared<Mock>(comm); }
-	string name() const override;
-	bool start() override;
-	void stop() override;
-	void sendCommand(uint16_t cmd, float param1 = 0, float param2 = 0, float param3 = 0, float param4 = 0,
-							 float param5 = 0, float param6 = 0, float param7 = 0) override;
-	void sendCommandInt(uint16_t cmd, float param1 = 0, float param2 = 0, float param3 = 0, float param4 = 0,
-								 float param5 = 0, float param6 = 0, float param7 = 0) override;
-	bool createMission(const data::CoordinateList &points, data::CoordinateList &mission, const common::AnyMap &params) override;
-	void clearMission() override;
-	void writeMission(const data::CoordinateList &points, const common::AnyMap &params) override;
-	void readMission(data::CoordinateList &points) override;
+	static DevicePtr Create(const comms::CommunicationPtr &comm) { return std::make_shared<Mock>(comm); }
+	string Name() const override;
+	bool Start() override;
+	void Stop() override;
 };
 
 }

@@ -23,16 +23,17 @@ public:
 public:
 	static CoordinatePtr create() { return std::make_shared<QtCoordinate>(); }
 	static CoordinatePtr create(double lat, double lon, double alt = 0.0) { return std::make_shared<QtCoordinate>(lat, lon, alt); }
-	double lat() const override { return _geoCoord.latitude(); }
-	double lon() const override { return _geoCoord.longitude(); }
-	double alt() const override { return _geoCoord.altitude(); }
-	void setLat(double lat) override { _geoCoord.setLatitude(lat); }
-	void setLon(double lon) override { _geoCoord.setLongitude(lon); }
-	void setAlt(double alt) override { _geoCoord.setAltitude(alt); }
-	double distanceTo(const CoordinatePtr &point) const override;
-	double azimuthTo(const CoordinatePtr &point) const override;
-	CoordinatePtr atDistanceAndAzimuth(double distance, double azimuth, double distanceUp = 0.0) const override;
-	bool isEmpty() const override { return _geoCoord.isValid(); }
+	double Lat() const override { return _geoCoord.latitude(); }
+	double Lon() const override { return _geoCoord.longitude(); }
+	double Alt() const override { return _geoCoord.altitude(); }
+	void SetLat(double lat) override { _geoCoord.setLatitude(lat); }
+	void SetLon(double lon) override { _geoCoord.setLongitude(lon); }
+	void SetAlt(double alt) override { _geoCoord.setAltitude(alt); }
+	double DistanceTo(const CoordinatePtr &point) const override;
+	double AzimuthTo(const CoordinatePtr &point) const override;
+	CoordinatePtr AtDistanceAndAzimuth(double distance, double azimuth, double distanceUp = 0.0) const override;
+	bool IsEmpty() const override { return _geoCoord.isValid(); }
+	bool IsEqual(const CoordinatePtr &point) const override;
 };
 
 }

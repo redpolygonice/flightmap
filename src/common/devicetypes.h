@@ -6,6 +6,9 @@
 namespace common
 {
 
+constexpr float kArmMagic = 2989.0f;
+constexpr float kDisarmMagic = 21196.0f;
+
 // UART device name
 #ifdef WIN32
 #define UART_NAME "COM" // COM5 - radio module
@@ -66,6 +69,26 @@ enum class Severity
 	Notice,
 	Informational,
 	Debug
+};
+
+static StringList kFlightNodes = {
+	"Stabilize",
+	"Acrobatic",
+	"Alt Hold ",
+	"Auto",
+	"Guided",
+	"Loiter",
+	"RTL",
+	"Circle",
+	"Position",
+	"Land",
+	"OF_Loiter",
+	"Drift",
+	"None",
+	"Sport",
+	"Flip",
+	"Auto Tune",
+	"Pos Hold"
 };
 
 }

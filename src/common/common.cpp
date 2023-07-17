@@ -17,19 +17,7 @@
 namespace common
 {
 
-string i2s(int number)
-{
-	char szNumber[20];
-	sprintf(szNumber, "%d", number);
-	return szNumber;
-}
-
-int s2i(const string &text)
-{
-	return atoi(text.c_str());
-}
-
-string currentTime()
+string CurrentTime()
 {
 	std::time_t time = std::time(NULL);
 	char timeStr[50];
@@ -49,7 +37,7 @@ std::string currentTimeMs()
 	struct tm *tm = std::localtime(&now);
 
 	if (tm == nullptr)
-		return currentTime();
+		return CurrentTime();
 
 	sprintf(timeStr, "%04d-%02d-%02d-%02d-%02d-%02d.%03d",
 			tm->tm_year + 1900,
@@ -63,12 +51,12 @@ std::string currentTimeMs()
 	return timeStr;
 }
 
-int64_t timestamp()
+int64_t Timestamp()
 {
 	return std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-bool isFileExists(const std::string &fileName)
+bool IsFileExists(const std::string &fileName)
 {
 	struct stat st;
 	if (stat(fileName.c_str(), &st) == -1)
@@ -77,7 +65,7 @@ bool isFileExists(const std::string &fileName)
 	return true;
 }
 
-StringList getComPorts()
+StringList GetComPorts()
 {
 	StringList ports;
 
@@ -129,7 +117,7 @@ StringList getComPorts()
 	return ports;
 }
 
-std::string getCurrentDir()
+std::string GetCurrentDir()
 {
 #ifdef WIN32
 #define GetCurDir _getcwd
@@ -143,7 +131,7 @@ std::string getCurrentDir()
 	return string(buffer);
 }
 
-void copyFile(const std::string &from, const std::string &to)
+void CopyFile(const std::string &from, const std::string &to)
 {
 	std::ifstream source(from, std::ios::binary);
 	std::ofstream dest(to, std::ios::binary);
@@ -154,7 +142,7 @@ void copyFile(const std::string &from, const std::string &to)
 	dest.close();
 }
 
-void createDir(const std::string &dir)
+void CreateDir(const std::string &dir)
 {
 #ifdef WIN32
 	CreateDirectory(dir.c_str(), NULL);
@@ -163,7 +151,7 @@ void createDir(const std::string &dir)
 #endif
 }
 
-bool unzip(const string &fileName, const string &destDir)
+bool Unzip(const string &fileName, const string &destDir)
 {
 	unzFile zipfile = unzOpen(fileName.c_str());
 	if (zipfile == NULL)
@@ -222,6 +210,34 @@ bool unzip(const string &fileName, const string &destDir)
 
 	unzClose(zipfile);
 	return true;
+}
+
+StringList SplitString(const std::string &text, const std::string &separator)
+{
+	StringList list;
+
+	char *nextToken = NULL;
+	char *szTemp = strdup(text.c_str());
+
+#ifdef WIN32
+	char *szWord = strtok_s(szTemp, separator.c_str(), &nextToken);
+#else
+	char *szWord = strtok_r(szTemp, separator.c_str(), &nextToken);
+#endif
+
+	while (szWord != NULL)
+	{
+		list.push_back(szWord);
+
+#ifdef WIN32
+		szWord = strtok_s(NULL, separator.c_str(), &nextToken);
+#else
+		szWord = strtok_r(NULL, separator.c_str(), &nextToken);
+#endif
+	}
+
+	delete szTemp;
+	return list;
 }
 
 }

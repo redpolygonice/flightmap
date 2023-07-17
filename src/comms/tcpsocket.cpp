@@ -235,7 +235,7 @@ int TcpSocket::write(const char *buffer, size_t length)
 	}
 	else
 	{
-		result = send(_socket, reinterpret_cast<const char*>(buffer), length, 0);
+		result = send(_socket, buffer, length, 0);
 		if (result == SOCKET_ERROR)
 			return -1;
 	}

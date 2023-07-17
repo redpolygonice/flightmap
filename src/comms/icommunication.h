@@ -20,12 +20,12 @@ public:
 
 public:
 	const common::ConnectParams &connectParams() const { return _connectParams; }
-	virtual bool open() = 0; // Open with ConnectParams
-	virtual bool open(const string &host, unsigned short port) = 0;
-	virtual void close() = 0;
-	virtual void start(const ReadFunction &callback) = 0;
-	virtual bool write(const unsigned char *buffer, size_t size) = 0;
-	virtual void setBaudRate(uint32_t rate) { _baudrate = rate; }
+	virtual bool Open() = 0; // Open with ConnectParams
+	virtual bool Open(const string &host, unsigned short port) = 0;
+	virtual void Close() = 0;
+	virtual void Start(const ReadFunction &callback) = 0;
+	virtual bool Write(const unsigned char *buffer, size_t size) = 0;
+	virtual void SetBaudRate(uint32_t rate) { _baudrate = rate; }
 };
 
 typedef std::shared_ptr<ICommunication> CommunicationPtr;

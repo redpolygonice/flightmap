@@ -44,14 +44,14 @@ public:
 	virtual ~IMessage() {}
 
 public:
-	device::DevicePtr device() const { return _device; }
-	uint32_t id() const { return _id; }
-	string name() const { return _name; }
-	string error() const { return _error; }
-	State state() const { return _state; }
-	virtual void execute() = 0;
-	virtual void executeAsync() { _future = std::async(std::launch::async, [this]() { execute(); }); }
-	virtual void wait() { _future.wait(); }
+	device::DevicePtr GetDevice() const { return _device; }
+	uint32_t Id() const { return _id; }
+	string Name() const { return _name; }
+	string Error() const { return _error; }
+	State State() const { return _state; }
+	virtual void Execute() = 0;
+	virtual void ExecuteAsync() { _future = std::async(std::launch::async, [this]() { Execute(); }); }
+	virtual void Wait() { _future.wait(); }
 };
 
 typedef std::shared_ptr<IMessage> MessagePtr;

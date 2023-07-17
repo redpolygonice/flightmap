@@ -8,50 +8,51 @@
 #include "devices/pixhawk.h"
 #include "devices/raspi.h"
 #include "devices/mock.h"
-
-#include <mavlink/common/mavlink.h>
-#include <mavlink/ardupilotmega/ardupilotmega.h>
+#include "data/grid.h"
 
 namespace core
 {
 
 #define CHECK_DEVICE()						\
-if (!_connected)							\
-	return false;							\
-device::DevicePtr device = activeDevice();	\
-if (device == nullptr)						\
+	device::DevicePtr device = ActiveDevice();	\
+	if (device == nullptr)						\
 {											\
 	LOGW("There is no connected device!");	\
 	return false;							\
 }
 
 Broker::Broker()
-	: _connected(false)
-	, _connectManager(nullptr)
+	: _deviceManager(nullptr)
+	, _timePoint(std::chrono::high_resolution_clock::now())
 {
-	_connectManager = device::ConnectionManager::create();
+	_deviceManager = device::DeviceManager::Create();
 }
 
 Broker::~Broker()
 {
 }
 
-void Broker::stop()
+void Broker::Stop()
 {
-	_connectManager->removeAll();
-	_connected = false;
+	_deviceManager->RemoveAll();
 }
 
-bool Broker::connect(const common::ConnectParams &params)
+bool Broker::IsConnected() const
 {
-	_connected = false;
+	if (_deviceManager->Count() == 0)
+		return false;
 
+	return true;
+}
+
+bool Broker::Connect(const common::ConnectParams &params)
+{
 	// First create communication and check it
 	comms::CommBuilder commBuilder;
-	comms::CommunicationPtr comm = commBuilder.create(params);
+	comms::CommunicationPtr comm = commBuilder.Create(params);
 	if (comm == nullptr)
 	{
-		LOGE("[Broker] Can't create communication!");
+		LOGE("Can't create communication!");
 		return false;
 	}
 
@@ -59,205 +60,461 @@ bool Broker::connect(const common::ConnectParams &params)
 	device::DevicePtr device = nullptr;
 	if (params.device == "Pixhawk")
 	{
-		device = device::Pixhawk::create(comm);
+		device = device::Pixhawk::Create(comm);
 	}
 	else if (params.device == "Raspi")
 	{
-		device = device::Raspi::create(comm);
+		device = device::Raspi::Create(comm);
 	}
 	else if (params.device == "Mock")
 	{
-		device = device::Mock::create(comm);
+		device = device::Mock::Create(comm);
 	}
 	else
 	{
-		LOGE("[Broker] Can't create device, wrong params!");
+		LOGE("Can't create device, wrong params!");
 		return false;
 	}
 
 	// Create connection object
-	_connectManager->add(device);
-	device->start();
+	_deviceManager->Add(device);
+	device->Start();
 
-	_connected = true;
+	LOG("Waiting heartbeat ..");
+	if (!device->WaitHeartbeat())
+	{
+		LOGW("Device not working!");
+		return false;
+	}
+
 	return true;
 }
 
-void Broker::disconnect()
+bool Broker::ConnectAsync(const common::ConnectParams &params, const ConnectFunction &func)
 {
-	if (!_connected)
+	std::thread([this,params,func]() {
+		bool result = Connect(params);
+		std::invoke(func, result);
+	}).detach();
+	return true;
+}
+
+void Broker::Disconnect()
+{
+	if (!IsConnected())
+	{
+		LOGW("There is no connected devices!");
+		return;
+	}
+
+	device::DevicePtr device = ActiveDevice();
+	if (device == nullptr)
 		return;
 
-	string deviceName = _connectManager->active()->device()->name();
-	_connectManager->active()->device()->stop();
-	_connectManager->remove(_connectManager->active()->device());
+	device->Stop();
+	_deviceManager->Remove(device);
 
-	LOG("[Broker] Device " << deviceName << " disconnected");
-	_connected = false;
+	LOG("Device " << device->Name() << " disconnected!");
 }
 
-bool Broker::createMission(const data::CoordinateList &points, data::CoordinateList &mission, const common::AnyMap &params)
+void Broker::Disconnect(int number)
 {
-	CHECK_DEVICE()
-	return device->createMission(points, mission, params);
+	if (!IsConnected())
+	{
+		LOGW("There is no connected devices!");
+		return;
+	}
+
+	device::DevicePtr device =_deviceManager->FindDeviceByNumber(number);
+	if (device == nullptr)
+		return;
+
+	device->Stop();
+	_deviceManager->Remove(number);
+	LOG("Device " << device->Name() << " disconnected!");
 }
 
-bool Broker::clearMission()
+device::ConnectionPtr Broker::FindConnection(const common::ConnectParams &params) const
 {
-	CHECK_DEVICE()
-	device->clearMission();
+	return nullptr;
+}
+
+void Broker::SetAcive(int number)
+{
+	_deviceManager->SetActive(number);
+}
+
+float Broker::ComputeAlt(float lat, float lon, bool check, int type, int value)
+{
+	float alt = 50.0;
+	common::AltType altType = static_cast<common::AltType>(type);
+
+	if (check)
+	{
+		if (altType == common::AltType::Absolute || altType == common::AltType::Terrain)
+			alt = value;
+		else if (altType == common::AltType::Relative)
+			alt = core::Broker::instance()->GetAltitude(lat, lon) + value;
+	}
+
+	return alt;
+}
+
+bool Broker::CreateMission(const data::CoordinateList &points, data::CoordinateList &mission, const common::AnyMap &params)
+{
+	data::Grid grid;
+	if (!grid.Create(points, mission, params) || mission.empty())
+	{
+		LOG("Can't create mission points!");
+		return false;
+	}
+
 	return true;
 }
 
-bool Broker::writeMission(const data::CoordinateList &points, const common::AnyMap &params)
+bool Broker::ClearMission()
 {
 	CHECK_DEVICE()
-	_future = std::async(std::launch::async, [&]() { device->writeMission(points, params); });
-	_future.wait();
+	device->ClearMission();
 	return true;
 }
 
-bool Broker::readMission(data::CoordinateList &points)
+bool Broker::WriteMission(const data::CoordinateList &points, const common::AnyMap &params)
 {
 	CHECK_DEVICE()
-	_future = std::async(std::launch::async, [&]() { device->readMission(points); });
-	_future.wait();
+	device->WriteMission(points, params);
 	return true;
 }
 
-void Broker::startMission()
+bool Broker::WriteMissionAsync(const data::CoordinateList &points, const common::AnyMap &params)
 {
-	if (activeDevice() == nullptr)
+	CHECK_DEVICE()
+	std::thread([device,points,params]() {
+		device->WriteMission(points, params);
+	}).detach();
+	return true;
+}
+
+bool Broker::ReadMission(data::CoordinateList &points)
+{
+	CHECK_DEVICE()
+	device->ReadMission(points);
+	return true;
+}
+
+bool Broker::ReadMissionAsync(const ReadMissionFunction &func)
+{
+	CHECK_DEVICE()
+	std::thread([device,func]() {
+		data::CoordinateList points;
+		device->ReadMission(points);
+		std::invoke(func, points);
+	}).detach();
+	return true;
+}
+
+bool Broker::SaveMissionToFile(const std::string &fileName, const data::CoordinateList &points, const common::AnyMap &params)
+{
+	data::Grid grid;
+	if (!grid.SaveFile(fileName, points, params))
+	{
+		LOGE("Can't save mission!");
+		return false;
+	}
+
+	return true;
+}
+
+bool Broker::LoadMissionFromFile(const std::string &fileName, data::CoordinateList &points, common::AnyMap &params)
+{
+	data::Grid grid;
+	if (!grid.LoadFile(fileName, points, params))
+	{
+		LOGE("Can't load mission!");
+		return false;
+	}
+
+	return true;
+}
+
+void Broker::ProcessKeyDown(KeyCode key)
+{
+	if (!PressControl())
+		return;
+
+	if (key == KeyCode::Left)
+	{
+		TurnLeft();
+	}
+	else if (key == KeyCode::Right)
+	{
+		TurnRight();
+	}
+	else if (key == KeyCode::Up)
+	{
+		MoveUp();
+	}
+	else if (key == KeyCode::Down)
+	{
+		MoveDown();
+	}
+	else if (key == KeyCode::W)
+	{
+		MoveForward();
+	}
+	else if (key == KeyCode::S)
+	{
+		MoveBack();
+	}
+	else if (key == KeyCode::A)
+	{
+		MoveLeft();
+	}
+	else if (key == KeyCode::D)
+	{
+		MoveRight();
+	}
+}
+
+void Broker::ProcessKeyUp(KeyCode key)
+{
+	if (key == KeyCode::Left)
+	{
+		TurnLeft(true);
+	}
+	else if (key == KeyCode::Right)
+	{
+		TurnRight(true);
+	}
+	else if (key == KeyCode::Up)
+	{
+		MoveUp(true);
+	}
+	else if (key == KeyCode::Down)
+	{
+		MoveDown(true);
+	}
+	else if (key == KeyCode::W)
+	{
+		MoveForward(true);
+	}
+	else if (key == KeyCode::S)
+	{
+		MoveBack(true);
+	}
+	else if (key == KeyCode::A)
+	{
+		MoveLeft(true);
+	}
+	else if (key == KeyCode::D)
+	{
+		MoveRight(true);
+	}
+}
+
+void Broker::StartMission()
+{
+	if (ActiveDevice() == nullptr)
 		return;
 
 	// Loiter
-	loiter();
-	common::sleep(1000);
+	Loiter();
+	common::Sleep(1000);
 
 	// Arm
-	armDisarm(true);
-	common::sleep(2000);
+	Arm(true);
+	common::Sleep(2000);
 
 	// Set channels
-	_channels[1] = 1500;
-	_channels[2] = 1500;
-	_channels[3] = 1500;
-	_channels[4] = 1500;
+	DefaultChannels();
 
-	activeDevice()->RcChannelsOverride(_channels[1], _channels[2], _channels[3], _channels[4]);
-	common::sleep(500);
+	ActiveDevice()->RcChannelsOverride(_channels[1], _channels[2], _channels[3], _channels[4]);
+	common::Sleep(500);
 }
 
-void Broker::setHome(const data::CoordinatePtr &point)
+void Broker::SetHome(const data::CoordinatePtr &point)
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	activeDevice()->setHome(point->lat(), point->lon(), point->alt());
+	ActiveDevice()->SetHome(point->Lat(), point->Lon(), point->Alt());
 }
 
-void Broker::setPosition(const data::CoordinatePtr &point)
+void Broker::SetPosition(const data::CoordinatePtr &point)
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	activeDevice()->setMode(device::IDevice::FlightModes::MODE_GUIDED);
-	activeDevice()->setPosition(point->lat(), point->lon(), point->alt());
+	ActiveDevice()->SetMode(device::FlightDevice::FlightModes::ModeGuided);
+	ActiveDevice()->SetPosition(point->Lat(), point->Lon(), point->Alt());
 }
 
-void Broker::setMode(uint32_t mode)
+void Broker::SetMode(uint32_t mode)
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	activeDevice()->setMode(mode);
+	ActiveDevice()->SetMode(mode);
 }
 
-void Broker::armDisarm(bool arm)
+void Broker::Arm(bool arm)
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
 	float param1 = (arm == true ? 1 : 0);
-	float param2 = (arm == true ? 2989.0f : 21196.0f);
+	float param2 = (arm == true ? common::kArmMagic : common::kDisarmMagic);
 
-	activeDevice()->sendCommand(MAV_CMD_COMPONENT_ARM_DISARM, param1, param2);
+	ActiveDevice()->SendCommand(MAV_CMD_COMPONENT_ARM_DISARM, param1, param2);
 }
 
-void Broker::loiter()
+void Broker::Loiter()
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	activeDevice()->sendCommand(MAV_CMD_NAV_LOITER_UNLIM, 1);
+	ActiveDevice()->SendCommand(MAV_CMD_NAV_LOITER_UNLIM, 1);
 }
 
 void Broker::rtl()
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	activeDevice()->sendCommand(MAV_CMD_NAV_RETURN_TO_LAUNCH, 1);
+	ActiveDevice()->SendCommand(MAV_CMD_NAV_RETURN_TO_LAUNCH, 1);
 }
 
-void Broker::autom()
+void Broker::Auto()
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	activeDevice()->setMode(device::IDevice::FlightModes::MODE_AUTO);
+	ActiveDevice()->SetMode(device::FlightDevice::FlightModes::ModeAuto);
 }
 
-void Broker::writeChannel(int index, uint16_t rc)
+void Broker::WriteChannel(int index, uint16_t rc)
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
 	if (index < 1 || index > 4)
 		return;
 
+	//clearChannels();
 	_channels[index] = rc;
-	activeDevice()->RcChannelsOverride(_channels[1], _channels[2], _channels[3], _channels[4]);
+	ActiveDevice()->RcChannelsOverride(_channels[1], _channels[2], _channels[3], _channels[4]);
 }
 
-void Broker::setDefaultChannel(int index)
+void Broker::SetDefaultChannel(int index)
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
 	if (index < 1 || index > 4)
 		return;
 
-	_channels[index] = 1500;
-	activeDevice()->RcChannelsOverride(_channels[1], _channels[2], _channels[3], _channels[4]);
+	_channels[index] = defaultChannel;
+	ActiveDevice()->RcChannelsOverride(_channels[1], _channels[2], _channels[3], _channels[4]);
 }
 
-void Broker::setDefaultChannels()
+void Broker::SetDefaultChannels()
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	_channels[1] = 1500;
-	_channels[2] = 1500;
-	_channels[3] = 1500;
-	_channels[4] = 1500;
-	activeDevice()->RcChannelsOverride(_channels[1], _channels[2], _channels[3], _channels[4]);
+	DefaultChannels();
+	ActiveDevice()->RcChannelsOverride(_channels[1], _channels[2], _channels[3], _channels[4]);
 }
 
-void Broker::sendServoCommand(float index, float ch)
+void Broker::SendServoCommand(float index, float ch)
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	activeDevice()->sendCommand(MAV_CMD_DO_SET_SERVO, index, ch);
+	ActiveDevice()->SendCommand(MAV_CMD_DO_SET_SERVO, index, ch);
 }
 
-void Broker::sendCommand(uint32_t cmd, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
+void Broker::SendCommand(uint32_t cmd, float param1, float param2, float param3, float param4, float param5, float param6, float param7)
 {
-	if (activeDevice() == nullptr)
+	if (ActiveDevice() == nullptr)
 		return;
 
-	activeDevice()->sendCommand(cmd, param1, param2, param3, param4, param5, param6, param7);
+	ActiveDevice()->SendCommand(cmd, param1, param2, param3, param4, param5, param6, param7);
+}
+
+void Broker::MoveUp(bool stop)
+{
+	if (stop)
+		SetDefaultChannel(2);
+	else
+		WriteChannel(2, channelHigh);
+}
+
+void Broker::MoveDown(bool stop)
+{
+	if (stop)
+		SetDefaultChannel(2);
+	else
+		WriteChannel(2, channelLow);
+}
+
+void Broker::MoveLeft(bool stop)
+{
+	if (stop)
+		SetDefaultChannel(1);
+	else
+		WriteChannel(1, channelLow);
+}
+
+void Broker::MoveRight(bool stop)
+{
+	if (stop)
+		SetDefaultChannel(1);
+	else
+		WriteChannel(1, channelHigh);
+}
+
+void Broker::MoveForward(bool stop)
+{
+	if (stop)
+		SetDefaultChannel(3);
+	else
+		WriteChannel(3, channelHigh);
+}
+
+void Broker::MoveBack(bool stop)
+{
+	if (stop)
+		SetDefaultChannel(3);
+	else
+		WriteChannel(3, channelLow);
+}
+
+void Broker::TurnLeft(bool stop)
+{
+	if (stop)
+		SetDefaultChannel(4);
+	else
+		WriteChannel(4, channelLow);
+}
+
+void Broker::TurnRight(bool stop)
+{
+	if (stop)
+		SetDefaultChannel(4);
+	else
+		WriteChannel(4, channelHigh);
+}
+
+bool Broker::PressControl()
+{
+	std::chrono::high_resolution_clock::time_point nowPoint = std::chrono::high_resolution_clock::now();
+	int64_t count = std::chrono::duration_cast<std::chrono::milliseconds>(nowPoint - _timePoint).count();
+	if (count < _timeInterval)
+		return false;
+
+	_timePoint = nowPoint;
+	return true;
 }
 
 }

@@ -1,4 +1,5 @@
 import QtQuick 2.0
+import QtPositioning 5.6
 
 Rectangle {
 	id: control
@@ -10,11 +11,13 @@ Rectangle {
 		else
 			return 312
 	}
-	color: "#000000"
+	color: backColor
 	border.width: 2
 	border.color: "#ffffff"
+	radius: 10
 
 	property int pixelSize: 12
+	property color backColor: "#172839"
 
 	Component.onCompleted: {
 		update()
@@ -265,5 +268,14 @@ Rectangle {
 		textLink.text = proxy.telemetry["link"] + "%"
 		textMode.text = proxy.telemetry["mode"]
 		hudWidget.update(proxy.telemetry["roll"], proxy.telemetry["pitch"])
+
+		// Update quadrocopter
+		if (proxy.telemetry["status"] > 0)
+		{
+			var quadro = mapId.createQuadro(proxy.telemetry["number"])
+			quadro.name = proxy.telemetry["name"]
+			quadro.coordinate = QtPositioning.coordinate(proxy.telemetry["lat"], proxy.telemetry["lon"])
+			quadro.update(proxy.telemetry["yaw"])
+		}
 	}
 }

@@ -3,24 +3,35 @@
 
 #include "common/types.h"
 #include "icommunication.h"
+#include "isocket.h"
 
 namespace comms
 {
 
-// UDP client communication implementation
+// UDP outcoming communication implementation
 class UdpcComm : public ICommunication
 {
+private:
+	std::atomic_bool _active;
+	SocketPtr _socket;
+	ReadFunction _callback;
+	std::thread _thread;
+	std::mutex _mutex;
+
+private:
+	void run();
+
 public:
 	UdpcComm(const common::ConnectParams &params);
 	virtual ~UdpcComm();
 
 public:
 	static CommunicationPtr create(const common::ConnectParams &params) { return std::make_shared<UdpcComm>(params); }
-	bool open() override { return false; }
-	bool open(const string &host, unsigned short port) override;
-	void close() override;
-	void start(const ReadFunction &callback) override;
-	bool write(const unsigned char *buffer, size_t size) override;
+	bool Open() override { return false; }
+	bool Open(const string &host, unsigned short port) override;
+	void Close() override;
+	void Start(const ReadFunction &callback) override;
+	bool Write(const unsigned char *buffer, size_t size) override;
 };
 
 }
