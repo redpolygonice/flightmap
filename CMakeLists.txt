@@ -45,6 +45,11 @@ file (GLOB COMMS_SRC "src/comms/*.cpp" "src/comms/*.h")
 source_group("comms" FILES ${COMMS_SRC})
 set (ALL_SRC ${ALL_SRC} ${COMMS_SRC})
 
+# Onboard group
+file (GLOB ONBOARD_SRC "src/onboard/*.cpp" "src/onboard/*.h")
+source_group("onboard" FILES ${ONBOARD_SRC})
+set (ALL_SRC ${ALL_SRC} ${ONBOARD_SRC})
+
 # Sources
 include_directories("src")
 file(GLOB SOURCES "src/*.h" "src/*.hpp" "src/*.cpp")

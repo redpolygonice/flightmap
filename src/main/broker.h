@@ -25,6 +25,7 @@ class Broker : public Singleton<Broker>
 private:
 	device::DeviceManagerPtr _deviceManager;
 	data::Srtm _srtm;
+	string _imagePath;
 
 	// Channels overrides
 	std::map<int, uint16_t> _channels;
@@ -43,6 +44,7 @@ private:
 	bool PressControl();
 	void ClearChannels() { 	for (auto& [key, value] : _channels) _channels[key] = 0; }
 	void DefaultChannels() { for (auto& [key, value] : _channels) _channels[key] = defaultChannel; }
+	void CreateImagePath();
 
 public:
 	~Broker();
@@ -63,6 +65,7 @@ public:
 	float GetAltitude(float lat, float lon) { return _srtm.GetAltitude(lat, lon); }
 	static float ComputeAlt(float lat, float lon, bool check, int type, int value);
 	void SetMapZoom(double zoom) {}
+	string ImageLocation() const { return _imagePath; }
 
 	// Mission
 	bool CreateMission(const data::CoordinateList &points, data::CoordinateList &mission, const common::AnyMap &params);
@@ -101,6 +104,10 @@ public:
 	void MoveBack(bool stop = false);
 	void TurnLeft(bool stop = false);
 	void TurnRight(bool stop = false);
+
+	// Camera
+	void StartCamera();
+	void StopCamera();
 };
 
 }

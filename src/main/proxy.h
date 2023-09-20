@@ -95,6 +95,9 @@ public slots:
 	Q_INVOKABLE void turnRight(bool stop = false);
 	Q_INVOKABLE void saveMissionToFile(const QString &fileName, const QVariantMap &params);
 	Q_INVOKABLE QVariantMap loadMissionFromFile(const QString &fileName);
+	Q_INVOKABLE QString imageLocation();
+	Q_INVOKABLE void startCamera();
+	Q_INVOKABLE void stopCamera();
 
 public:
 	void TestMissionPoints();

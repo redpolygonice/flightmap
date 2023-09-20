@@ -6,6 +6,7 @@
 #include "comms/icommunication.h"
 #include "data/telebox.h"
 #include "data/imission.h"
+#include "onboard/camera.h"
 
 namespace device
 {
@@ -44,6 +45,8 @@ protected:
 	data::TeleBoxPtr _telebox;
 	data::MissionPtr _mission;
 	common::DeviceType _type;
+	onboard::CameraPtr _camera;
+	std::atomic_bool _camwork;
 
 	uint8_t _systemId = 255;
 	uint8_t _componentId = 0;
@@ -52,7 +55,8 @@ protected:
 	uint8_t _sequence = 0;
 
 public:
-	FlightDevice(const comms::CommunicationPtr &comm) : _comm(comm), _telebox(nullptr), _mission(nullptr) {}
+	FlightDevice(const comms::CommunicationPtr &comm) : _comm(comm), _telebox(nullptr),
+		_mission(nullptr), _camera(nullptr), _camwork(false) {}
 	virtual ~FlightDevice() {}
 
 public:
@@ -60,6 +64,7 @@ public:
 	data::TeleBoxPtr Telebox() const override { return _telebox; }
 	data::MissionPtr Mission() const override { return _mission; }
 	common::DeviceType Type() const override { return _type; }
+	onboard::CameraPtr Camera() const override { return _camera; }
 	virtual string Name() const override { return string(); }
 	virtual bool Start() override { return true; }
 	virtual void Stop() override {}
@@ -77,6 +82,9 @@ public:
 	virtual void SetMode(uint32_t mode) override;
 	virtual void SetHome(float lat, float lon, float alt) override;
 	virtual void SetPosition(double lat, double lon, double alt) override;
+	virtual void StartCamera() override {}
+	virtual void StopCamera() override {}
+	void SetCamWork(bool work = true) override { _camwork = work; }
 };
 
 }

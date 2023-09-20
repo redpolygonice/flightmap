@@ -26,6 +26,7 @@ Broker::Broker()
 	, _timePoint(std::chrono::high_resolution_clock::now())
 {
 	_deviceManager = device::DeviceManager::Create();
+	CreateImagePath();
 }
 
 Broker::~Broker()
@@ -175,21 +176,21 @@ bool Broker::CreateMission(const data::CoordinateList &points, data::CoordinateL
 bool Broker::ClearMission()
 {
 	CHECK_DEVICE()
-	device->ClearMission();
+			device->ClearMission();
 	return true;
 }
 
 bool Broker::WriteMission(const data::CoordinateList &points, const common::AnyMap &params)
 {
 	CHECK_DEVICE()
-	device->WriteMission(points, params);
+			device->WriteMission(points, params);
 	return true;
 }
 
 bool Broker::WriteMissionAsync(const data::CoordinateList &points, const common::AnyMap &params)
 {
 	CHECK_DEVICE()
-	std::thread([device,points,params]() {
+			std::thread([device,points,params]() {
 		device->WriteMission(points, params);
 	}).detach();
 	return true;
@@ -198,14 +199,14 @@ bool Broker::WriteMissionAsync(const data::CoordinateList &points, const common:
 bool Broker::ReadMission(data::CoordinateList &points)
 {
 	CHECK_DEVICE()
-	device->ReadMission(points);
+			device->ReadMission(points);
 	return true;
 }
 
 bool Broker::ReadMissionAsync(const ReadMissionFunction &func)
 {
 	CHECK_DEVICE()
-	std::thread([device,func]() {
+			std::thread([device,func]() {
 		data::CoordinateList points;
 		device->ReadMission(points);
 		std::invoke(func, points);
@@ -506,6 +507,22 @@ void Broker::TurnRight(bool stop)
 		WriteChannel(4, channelHigh);
 }
 
+void Broker::StartCamera()
+{
+	if (ActiveDevice() == nullptr)
+		return;
+
+	ActiveDevice()->StartCamera();
+}
+
+void Broker::StopCamera()
+{
+	if (ActiveDevice() == nullptr)
+		return;
+
+	ActiveDevice()->StopCamera();
+}
+
 bool Broker::PressControl()
 {
 	std::chrono::high_resolution_clock::time_point nowPoint = std::chrono::high_resolution_clock::now();
@@ -515,6 +532,22 @@ bool Broker::PressControl()
 
 	_timePoint = nowPoint;
 	return true;
+}
+
+void Broker::CreateImagePath()
+{
+	string tmpDir;
+	char *homeDir = getenv("HOME");
+	if (homeDir == nullptr)
+		tmpDir = "/tmp";
+	else
+	{
+		tmpDir = string(homeDir) + PS + ".tmp";
+		if (!common::IsFileExists(tmpDir))
+			common::CreateDir(tmpDir);
+	}
+
+	_imagePath = tmpDir + PS + "img.jpg";
 }
 
 }

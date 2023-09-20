@@ -7,6 +7,7 @@
 #include "sysstatusmessage.h"
 #include "statustextmessage.h"
 #include "autopilotversionmessage.h"
+#include "commandmessage.h"
 
 namespace message
 {
@@ -115,6 +116,22 @@ MessagePtr Factory::Create(const mavlink_message_t &mavlink)
 		message = AutopilotVersionMessage::create(_device);
 		InitDefaultParams(message, mavlink, "autopilotversion");
 		message->_params["capabilities"] = autopilotversion.capabilities;
+	}
+	else if (mavlink.msgid == MAVLINK_MSG_ID_COMMAND_LONG)
+	{
+		mavlink_command_long_t command;
+		mavlink_msg_command_long_decode(&mavlink, &command);
+
+		message = CommandMessage::create(_device);
+		InitDefaultParams(message, mavlink, "command");
+		message->_params["cmd"] = command.command;
+		message->_params["param1"] = command.param1;
+		message->_params["param2"] = command.param2;
+		message->_params["param3"] = command.param3;
+		message->_params["param4"] = command.param4;
+		message->_params["param5"] = command.param5;
+		message->_params["param6"] = command.param6;
+		message->_params["param7"] = command.param7;
 	}
 
 	return message;

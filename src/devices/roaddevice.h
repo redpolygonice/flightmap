@@ -72,6 +72,8 @@ public:
 	virtual void SetMode(uint32_t mode) override;
 	virtual void SetHome(float lat, float lon, float alt) override;
 	virtual void SetPosition(double lat, double lon, double alt) override;
+	virtual void StartCamera() override {}
+	virtual void StopCamera() override {}
 };
 
 }

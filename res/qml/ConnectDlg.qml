@@ -136,7 +136,7 @@ Dialog {
 	{
 		var index = protocolComboBox.find(protocol)
 		protocolComboBox.currentIndex = index === -1 ? 0 : index
-		index = deviceComboBox.find(protocol)
+		index = deviceComboBox.find(device)
 		deviceComboBox.currentIndex = index === -1 ? 0 : index
 		hostText.text = host
 		portText.text = port

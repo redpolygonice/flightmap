@@ -351,7 +351,7 @@ void Simulator::SendMissionItem(uint16_t index)
 	data.current = 0;
 	data.seq = index;
 	data.autocontinue = 1;
-	data.mission_type = 0;
+	//data.mission_type = 0;
 	data.param1 = 0;
 	data.param2 = 0;
 	data.param3 = 0;
@@ -380,7 +380,7 @@ void Simulator::SendMissionItemInt(uint16_t index)
 	data.current = 0;
 	data.seq = index;
 	data.autocontinue = 1;
-	data.mission_type = 0;
+	//data.mission_type = 0;
 	data.param1 = 0;
 	data.param2 = 0;
 	data.param3 = 0;

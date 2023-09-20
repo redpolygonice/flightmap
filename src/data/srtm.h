@@ -6,6 +6,8 @@
 namespace data
 {
 
+constexpr char srtmPath[] = "data/srtm";
+
 // Shuttle Radar Topography Mission - allows detect altitude
 class Srtm
 {

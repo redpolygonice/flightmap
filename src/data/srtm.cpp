@@ -8,15 +8,11 @@ namespace data
 
 Srtm::Srtm()
 {
-#ifdef WIN32
-	_srtmPath = "d:\\distr\\srtm";
-#else
-	_srtmPath = "/home/alexey/distr/srtm";
+	_srtmPath = common::GetCurrentDir() + PS + srtmPath;
 	if (!common::IsFileExists(_srtmPath))
-		_srtmPath = "/home/aleksey/distr/srtm";
-#endif
-	_dataPath = common::GetCurrentDir() + PS + "srtm";
+		_srtmPath = string("..") + PS + srtmPath;
 
+	_dataPath = common::GetCurrentDir() + PS + "srtm";
 	if (!common::IsFileExists(_dataPath))
 		common::CreateDir(_dataPath);
 

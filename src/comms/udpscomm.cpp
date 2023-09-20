@@ -18,6 +18,11 @@ UdpsComm::~UdpsComm()
 {
 }
 
+bool UdpsComm::Open()
+{
+	return Open(_connectParams.host, _connectParams.port);
+}
+
 bool UdpsComm::Open(const std::string &host, unsigned short port)
 {
 	_socket = UdpSocket::create(port);
@@ -55,7 +60,7 @@ void UdpsComm::run()
 
 	while (_active)
 	{
-		size_t size = _socket->read(reinterpret_cast<char *>(buffer), BUFFER_SIZE);
+		int size = _socket->read(reinterpret_cast<char *>(buffer), BUFFER_SIZE);
 		if (size > 0)
 		{
 			if (_callback != nullptr)

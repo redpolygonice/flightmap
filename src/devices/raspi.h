@@ -9,19 +9,17 @@
 namespace device
 {
 
-// Rapberry Pi device
+// Raspberry Pi device
 class Raspi : public FlightDevice
 {
 private:
 	std::atomic_bool _active;
 	std::thread _heartbeatThread;
 	std::thread _processThread;
-
-	std::mutex _mutexData;
-	std::vector<unsigned char> _data;
-
 	message::Factory _messageFactory;
-	std::vector<int> _missionTypes;
+
+	std::vector<unsigned char> _data;
+	std::mutex _mutexData;
 
 public:
 	Raspi(const comms::CommunicationPtr &comm);
@@ -38,6 +36,8 @@ public:
 	bool Start() override;
 	void Stop() override;
 	bool WaitHeartbeat() override;
+	void StartCamera() override;
+	void StopCamera() override;
 
 private:
 	void StartHeartbeat();

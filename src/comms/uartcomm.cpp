@@ -113,7 +113,7 @@ bool UartComm::Open()
 
 	if (tcgetattr(_handle, &tty) != 0)
 	{
-		LOG("[UartComm] tcgetattr error");
+		LOGE("[UartComm] tcgetattr error");
 		return false;
 	}
 

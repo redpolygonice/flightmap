@@ -5,6 +5,7 @@
 #include "devices/flightdevice.h"
 #include "comms/icommunication.h"
 #include "messages/factory.h"
+#include "common/threadsafequeue.h"
 
 namespace device
 {
@@ -16,16 +17,8 @@ private:
 	std::atomic_bool _active;
 	std::thread _heartbeatThread;
 	std::thread _processThread;
+	common::ThreadSafeQueue<ByteArrayPtr> _data;
 	message::Factory _messageFactory;
-
-	std::mutex _mutexData;
-	std::vector<unsigned char> _data;
-
-	uint8_t _systemId = 255;
-	uint8_t _componentId = 0;
-	uint8_t _targetSysid = 0;
-	uint8_t _targetCompid = 0;
-	uint8_t _sequence = 0;
 
 public:
 	Pixhawk(const comms::CommunicationPtr &comm);

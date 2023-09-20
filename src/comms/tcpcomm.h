@@ -27,7 +27,7 @@ public:
 
 public:
 	static CommunicationPtr create(const common::ConnectParams &params) { return std::make_shared<TcpComm>(params); }
-	bool Open() override { return false; }
+	bool Open() override;
 	bool Open(const string &host, unsigned short port) override;
 	void Close() override;
 	void Start(const ReadFunction &callback) override;

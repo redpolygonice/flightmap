@@ -136,6 +136,21 @@ QVariantMap ProxyApp::loadMissionFromFile(const QString &fileName)
 	return params;
 }
 
+QString ProxyApp::imageLocation()
+{
+	return QString::fromStdString(Broker::instance()->ImageLocation());
+}
+
+void ProxyApp::startCamera()
+{
+	Broker::instance()->StartCamera();
+}
+
+void ProxyApp::stopCamera()
+{
+	Broker::instance()->StopCamera();
+}
+
 void ProxyApp::log(const QString &text, int level)
 {
 	common::log(text.toStdString(), static_cast<common::Log::Level>(level));
@@ -442,7 +457,7 @@ void ProxyApp::startTelemetry()
 			_telemetry["yaw"] = _telebox->yaw;
 			_telemetry["grSpeed"] = _telebox->groundspeed;
 			_telemetry["airSpeed"] = _telebox->airspeed;
-			_telemetry["gps"] = QString(_telebox->gpstype.c_str());
+			_telemetry["gps"] = QString::fromStdString(_telebox->gpstype);
 			_telemetry["gpsHdop"] = _telebox->eph;
 			_telemetry["satellites"] = _telebox->satellites_visible;
 			_telemetry["heading"] = _telebox->heading;
@@ -450,11 +465,11 @@ void ProxyApp::startTelemetry()
 			_telemetry["batteryVolt"] = _telebox->voltage_battery;
 			_telemetry["batteryAmp"] = _telebox->current_battery;
 			_telemetry["link"] = 100 - _telebox->drop_rate_comm;
-			_telemetry["mode"] = QString(_telebox->flightmode.c_str());
+			_telemetry["mode"] = QString::fromStdString(_telebox->flightmode);
 			_telemetry["lat"] = _telebox->lat;
 			_telemetry["lon"] = _telebox->lon;
 			_telemetry["number"] = Broker::instance()->ActiveConnection()->Number();
-			_telemetry["name"] = Broker::instance()->ActiveDevice()->Name().c_str();
+			_telemetry["name"] = QString::fromStdString(Broker::instance()->ActiveDevice()->Name());
 			_telemetry["status"] = 1;
 
 			if (!_telebox->statustext.empty())

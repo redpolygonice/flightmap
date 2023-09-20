@@ -12,9 +12,6 @@ Raspi::Raspi(const comms::CommunicationPtr &comm)
 	, _active(false)
 {
 	_type = common::DeviceType::Pixhawk;
-	_missionTypes = { MAVLINK_MSG_ID_MISSION_COUNT, MAVLINK_MSG_ID_MISSION_REQUEST, MAVLINK_MSG_ID_MISSION_REQUEST_INT,
-						MAVLINK_MSG_ID_MISSION_ITEM, MAVLINK_MSG_ID_MISSION_ITEM_INT, MAVLINK_MSG_ID_MISSION_ACK,
-						MAVLINK_MSG_ID_MISSION_REQUEST_LIST, MAVLINK_MSG_ID_MISSION_SET_CURRENT };
 }
 
 Raspi::~Raspi()
@@ -36,6 +33,7 @@ bool Raspi::Start()
 	_messageFactory.Init(shared_from_this());
 	_telebox = data::TeleBox::Create();
 	_telebox->Enable();
+	_camera = onboard::Camera::Create();
 
 	// Start reading from pixhawk
 	_comm->Start([this](const ByteArray &data) { ReadData(data); });
@@ -51,6 +49,7 @@ void Raspi::Stop()
 {
 	_active = false;
 	_telebox->Disable();
+	_camera.reset();
 
 	if (_heartbeatThread.joinable())
 		_heartbeatThread.join();
@@ -73,6 +72,21 @@ bool Raspi::WaitHeartbeat()
 	}
 
 	return false;
+
+	//return true;
+}
+
+void Raspi::StartCamera()
+{
+	// Cmd, Width, Height, Quality, Brightness
+	SendCommand(MAV_CMD_VIDEO_START_CAPTURE, 1024, 768, 70, 50);
+	_camera->Init();
+}
+
+void Raspi::StopCamera()
+{
+	SendCommand(MAV_CMD_VIDEO_STOP_CAPTURE);
+	SetCamWork(false);
 }
 
 void Raspi::StartHeartbeat()
@@ -84,17 +98,23 @@ void Raspi::StartHeartbeat()
 		memset(&heartbeat, 0, sizeof(heartbeat));
 
 		heartbeat.type = MAV_AUTOPILOT_GENERIC_WAYPOINTS_AND_SIMPLE_NAVIGATION_ONLY;
-		heartbeat.system_status = 0;
+		heartbeat.system_status = 1;
 		heartbeat.custom_mode = 0;
 		heartbeat.base_mode = 0;
 		heartbeat.autopilot = 0;
+
+		// First send init heartbeat
+		mavlink_msg_heartbeat_encode(_systemId, _componentId, &message, &heartbeat);
+		Send(message);
+
+		// Then send usual heartbeat
+		heartbeat.system_status = 0;
 		mavlink_msg_heartbeat_encode(_systemId, _componentId, &message, &heartbeat);
 
 		while (_active)
 		{
-			if (!Send(message))
-				LOGE("[Pixhawk] Can't send Heartbeat!");
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			Send(message);
+			common::Sleep(1000);
 		}
 	});
 }
@@ -115,7 +135,7 @@ bool Raspi::RequestData()
 
 	if (!Send(message))
 	{
-		LOGE("[Pixhawk] Can't request data!");
+		LOGE("[Raspi] Can't request data!");
 		return false;
 	}
 
@@ -124,8 +144,9 @@ bool Raspi::RequestData()
 
 void Raspi::ReadData(const ByteArray &data)
 {
-	std::lock_guard<std::mutex> lock(_mutexData);
-	_data.insert(_data.end(), data.begin(), data.end());
+	_mutexData.lock();
+	std::copy(data.begin(), data.end(), std::back_inserter(_data));
+	_mutexData.unlock();
 }
 
 bool Raspi::ProcessData()
@@ -135,13 +156,9 @@ bool Raspi::ProcessData()
 
 	while (_active)
 	{
-		_mutexData.lock();
-		bool empty = _data.empty();
-		_mutexData.unlock();
-
-		if (empty)
+		if (_data.empty())
 		{
-			common::Sleep(50);
+			std::this_thread::sleep_for(std::chrono::milliseconds(1));
 			continue;
 		}
 
@@ -159,7 +176,7 @@ bool Raspi::ProcessData()
 
 				if (_mission != nullptr)
 				{
-					if (std::find(_missionTypes.begin(), _missionTypes.end(), message.msgid) != _missionTypes.end())
+					if (std::find(missionTypes.begin(), missionTypes.end(), message.msgid) != missionTypes.end())
 					{
 						_mission->ProcessMessage(message);
 						continue;
@@ -172,7 +189,7 @@ bool Raspi::ProcessData()
 			}
 		}
 
-		common::Sleep(100);
+		common::Sleep(50);
 	}
 
 	return true;

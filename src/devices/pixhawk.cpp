@@ -91,7 +91,7 @@ void Pixhawk::StartHeartbeat()
 		{
 			if (!Send(message))
 				LOGE("[Pixhawk] Can't send Heartbeat!");
-			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+			common::Sleep(1000);
 		}
 	});
 }
@@ -121,8 +121,9 @@ bool Pixhawk::RequestData()
 
 void Pixhawk::ReadData(const ByteArray &data)
 {
-	std::lock_guard<std::mutex> lock(_mutexData);
-	_data.insert(_data.end(), data.begin(), data.end());
+	ByteArray temp(0, data.size());
+	std::copy(data.begin(), data.end(), std::back_inserter(temp));
+	_data.Push(std::move(std::make_unique<ByteArray>(temp)));
 }
 
 bool Pixhawk::ProcessData()
@@ -132,23 +133,18 @@ bool Pixhawk::ProcessData()
 
 	while (_active)
 	{
-		_mutexData.lock();
-		bool empty = _data.empty();
-		_mutexData.unlock();
-
-		if (empty)
+		if (_data.Empty())
 		{
-			common::Sleep(50);
+			common::Sleep(20);
 			continue;
 		}
 
-		_mutexData.lock();
-		ByteArray temp(std::move(_data));
-		_mutexData.unlock();
+		ByteArrayPtr temp;
+		_data.Pop(std::move(temp));
 
-		for (size_t i = 0; i < temp.size(); ++i)
+		for (size_t i = 0; i < temp->size(); ++i)
 		{
-			if (mavlink_parse_char(0, temp[i], &message, &status))
+			if (mavlink_parse_char(0, temp->at(i), &message, &status))
 			{
 				_sequence = message.seq;
 				_targetSysid = message.sysid;
@@ -169,7 +165,7 @@ bool Pixhawk::ProcessData()
 			}
 		}
 
-		common::Sleep(100);
+		common::Sleep(50);
 	}
 
 	return true;

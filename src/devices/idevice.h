@@ -7,6 +7,8 @@
 #include "data/imission.h"
 #include "data/icoordinate.h"
 #include "common/anymap.h"
+#include "onboard/camera.h"
+
 #include <climits>
 
 namespace device
@@ -24,6 +26,7 @@ public:
 	virtual data::TeleBoxPtr Telebox() const { return nullptr; }
 	virtual data::MissionPtr Mission() const { return nullptr; }
 	virtual common::DeviceType Type() const { return common::DeviceType::Mock; }
+	virtual onboard::CameraPtr Camera() const { return nullptr; }
 	virtual string Name() const { return string(); }
 	virtual bool Start() = 0;
 	virtual void Stop() = 0;
@@ -43,6 +46,9 @@ public:
 	virtual void SetPosition(double lat, double lon, double alt) {}
 	virtual void SetMode(uint32_t mode) {}
 	virtual void SetHome(float lat, float lon, float alt) {}
+	virtual void StartCamera() = 0;
+	virtual void StopCamera() = 0;
+	virtual void SetCamWork(bool arg = true) = 0;
 };
 
 typedef std::shared_ptr<IDevice> DevicePtr;
