@@ -40,7 +40,7 @@ void Dispatcher::Run()
 	{
 		MessagePtr message = _buffer.Pop();
 		if (message != nullptr)
-			message->ExecuteAsync();
+			message->Execute();
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 	}

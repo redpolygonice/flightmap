@@ -77,14 +77,15 @@ void Pixhawk::StartHeartbeat()
 	_heartbeatThread = std::thread([this]()
 	{
 		mavlink_message_t message;
+		memset(&message, 0, sizeof(message));
 		mavlink_heartbeat_t heartbeat;
 		memset(&heartbeat, 0, sizeof(heartbeat));
 
-		heartbeat.type = MAV_AUTOPILOT_GENERIC_WAYPOINTS_AND_SIMPLE_NAVIGATION_ONLY;
-		heartbeat.system_status = 0;
+		heartbeat.type = MAV_TYPE_GENERIC;
+		heartbeat.autopilot = MAV_AUTOPILOT_GENERIC;
+		heartbeat.system_status = 1;
 		heartbeat.custom_mode = 0;
 		heartbeat.base_mode = 0;
-		heartbeat.autopilot = 0;
 		mavlink_msg_heartbeat_encode(_systemId, _componentId, &message, &heartbeat);
 
 		while (_active)

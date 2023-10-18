@@ -219,7 +219,7 @@ void Mission::Read(CoordinateList &points)
 	}
 	else
 	{
-		LOGW("Mission is not restored, no waypoints!");
+		LOGW("Mission is not restored, there is no waypoints!");
 	}
 }
 
@@ -391,7 +391,7 @@ bool Mission::GetMissionItem(int index, MissionItem &item)
 		RequestMission(index);
 
 	std::unique_lock<std::mutex> lock(_mutex);
-	_waitCond.wait_for(lock, std::chrono::milliseconds(1000), [this]() {
+	_waitCond.wait_for(lock, std::chrono::milliseconds(2000), [this]() {
 		return _isMissionItem;
 	});
 

@@ -59,7 +59,7 @@ public:
 	int16_t current_battery = 0; /*< [cA] Battery current, -1: Current not sent by autopilot*/
 	uint16_t drop_rate_comm = 0; /*< [c%] Communication drop rate, (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)*/
 	uint16_t errors_comm = 0; /*<  Communication errors (UART, I2C, SPI, CAN), dropped packets on all links (packets that were corrupted on reception on the MAV)*/
-	int8_t battery_remaining = 0; /*< [%] Battery energy remaining, -1: Battery remaining energy not sent by autopilot*/
+	int16_t battery_remaining = 0; /*< [%] Battery energy remaining, -1: Battery remaining energy not sent by autopilot*/
 
 	// mavlink_statustext_t
 	string statustext;
@@ -75,8 +75,8 @@ public:
 
 public:
 	static TeleBoxPtr Create() { return std::make_shared<TeleBox>(); }
-	inline void Lock() { _mutex.lock_shared(); }
-	inline void Unlock() { _mutex.unlock_shared(); }
+	void Lock() { _mutex.lock_shared(); }
+	void Unlock() { _mutex.unlock_shared(); }
 	void Enable() { _active = true; }
 	void Disable() { _active = false; }
 	bool IsActive() const { return _active; }

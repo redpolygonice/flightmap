@@ -25,12 +25,10 @@ void CommandMessage::Execute()
 
 void CommandMessage::StartStreaming()
 {
-	_device->SetCamWork(true);
 }
 
 void CommandMessage::StopStreaming()
 {
-	_device->SetCamWork(false);
 }
 
 }

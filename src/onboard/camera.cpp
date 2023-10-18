@@ -1,69 +1,104 @@
 #include "camera.h"
 #include "main/broker.h"
-#include <cstdint>
-#include <cstring>
 
 namespace onboard
 {
 
 Camera::Camera()
 	: _imageSize(0)
-	, _isMagic(false)
+	, _chunkCount(0)
+	, _chunkRemainder(0)
+	, _currentChunk(0)
+	, _isImageMagic(false)
+	, _isChunkMagic(false)
 {
 }
 
 Camera::~Camera()
 {
-	Init();
 }
 
-void Camera::Init()
+void Camera::Init(uint16_t size)
 {
-	_imageSize = 0;
-	_isMagic = false;
-	_data.clear();
+	_isImageMagic = false;
+	_isChunkMagic = false;
+	_imageSize = size;
+	_chunkCount = 0;
+	_chunkRemainder = 0;
+	_currentChunk = 0;
+	_imgData.clear();
+	_chunkData.clear();
 }
 
 void Camera::ParseBytes(const ByteArray &buffer)
 {
-	// Check header
-	if (buffer.size() < buffer.size())
-		return;
-
-	for (int i = 0; i < buffer.size(); ++i)
+	int i = 0;
+	while (i < buffer.size())
 	{
-		// Detect magic number
-		if (i + 1 < buffer.size() && _isMagic == false)
+		// Detect image magic number
+		if (i + 1 < buffer.size() && _isImageMagic == false)
 		{
-			if (buffer[i] == magic1 && buffer[i + 1] == magic2)
+			if (buffer[i] == kImageMagic1 && buffer[i + 1] == kImageMagic2)
 			{
-				_isMagic = true;
-				++i;
-				continue;
+				_isImageMagic = true;
+				i += 2;
 			}
 		}
 
-		// Got start position - compute size
-		if (_isMagic == true && _imageSize == 0)
+		// Compute image size
+		if (_isImageMagic == true && _imageSize == 0)
 		{
 			if (i + 1 < buffer.size())
 			{
-				std::memcpy(&_imageSize, &buffer[i], 2);
-				_data.reserve(_imageSize);
-				++i;
+				memcpy(&_imageSize, &buffer[i], 2);
+				_chunkCount = _imageSize / kBlock;
+				_chunkRemainder = _imageSize % kBlock;
+				i += 2;
 			}
 		}
-		else if (_isMagic == true && _imageSize > 0)
+
+		// Detect chunk magic number
+		if (i + 1 < buffer.size() && _isChunkMagic == false)
 		{
-			_data.push_back(buffer[i]);
-			if (_data.size() >= _imageSize)
+			if (buffer[i] == kChunkMagic1 && buffer[i + 1] == kChunkMagic2)
 			{
-				SaveImage();
-				if (_imageReady != nullptr)
-					_imageReady();
-				Init();
+				_isChunkMagic = true;
+				i += 2;
 			}
 		}
+
+		// Apend data
+		if (i < buffer.size() && _isChunkMagic == true)
+		{
+			_chunkData.push_back(buffer[i]);
+
+			uint16_t chunkSize = kBlock;
+			if (_currentChunk >= _chunkCount)
+				chunkSize = _chunkRemainder;
+
+			if (chunkSize == 0)
+			{
+				++i;
+				continue;
+			}
+
+			if (_chunkData.size() >= chunkSize)
+			{
+				std::copy(_chunkData.begin(), _chunkData.end(), std::back_inserter(_imgData));
+				_isChunkMagic = false;
+				_chunkData.clear();
+				_currentChunk++;
+
+				if (_imgData.size() >= _imageSize)
+				{
+					_imgData.resize(_imageSize);
+					SaveImage();
+					Init();
+				}
+			}
+		}
+
+		++i;
 	}
 }
 
@@ -74,7 +109,7 @@ void Camera::SaveImage()
 	if (fp == nullptr)
 		return;
 
-	fwrite((void*)_data.data(), _data.size(), 1, fp);
+	fwrite((void*)_imgData.data(), _imgData.size(), 1, fp);
 	fclose(fp);
 }
 

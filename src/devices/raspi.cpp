@@ -11,7 +11,7 @@ Raspi::Raspi(const comms::CommunicationPtr &comm)
 	: FlightDevice(comm)
 	, _active(false)
 {
-	_type = common::DeviceType::Pixhawk;
+	_type = common::DeviceType::Raspi;
 }
 
 Raspi::~Raspi()
@@ -79,8 +79,8 @@ bool Raspi::WaitHeartbeat()
 void Raspi::StartCamera()
 {
 	// Cmd, Width, Height, Quality, Brightness
-	SendCommand(MAV_CMD_VIDEO_START_CAPTURE, 1024, 768, 70, 50);
-	_camera->Init();
+	SendCommand(MAV_CMD_VIDEO_START_CAPTURE, 640, 480, 70, 50);
+	SetCamWork(true);
 }
 
 void Raspi::StopCamera()
@@ -94,14 +94,15 @@ void Raspi::StartHeartbeat()
 	_heartbeatThread = std::thread([this]()
 	{
 		mavlink_message_t message;
+		memset(&message, 0, sizeof(message));
 		mavlink_heartbeat_t heartbeat;
 		memset(&heartbeat, 0, sizeof(heartbeat));
 
-		heartbeat.type = MAV_AUTOPILOT_GENERIC_WAYPOINTS_AND_SIMPLE_NAVIGATION_ONLY;
+		heartbeat.type = MAV_TYPE_GENERIC;
+		heartbeat.autopilot = MAV_AUTOPILOT_GENERIC;
 		heartbeat.system_status = 1;
 		heartbeat.custom_mode = 0;
 		heartbeat.base_mode = 0;
-		heartbeat.autopilot = 0;
 
 		// First send init heartbeat
 		mavlink_msg_heartbeat_encode(_systemId, _componentId, &message, &heartbeat);
@@ -158,13 +159,16 @@ bool Raspi::ProcessData()
 	{
 		if (_data.empty())
 		{
-			std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			std::this_thread::sleep_for(std::chrono::milliseconds(5));
 			continue;
 		}
 
 		_mutexData.lock();
 		ByteArray temp(std::move(_data));
 		_mutexData.unlock();
+
+		if (_camwork)
+			_camera->ParseBytes(temp);
 
 		for (size_t i = 0; i < temp.size(); ++i)
 		{

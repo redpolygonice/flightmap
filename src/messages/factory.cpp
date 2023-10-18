@@ -97,7 +97,7 @@ MessagePtr Factory::Create(const mavlink_message_t &mavlink)
 		message->_params["current_battery"] = status.current_battery;
 		message->_params["drop_rate_comm"] = status.drop_rate_comm;
 		message->_params["errors_comm"] = status.errors_comm;
-		message->_params["battery_remaining"] = status.battery_remaining;
+		message->_params["battery_remaining"] = static_cast<int16_t>(status.battery_remaining);
 	}
 	else if (mavlink.msgid == MAVLINK_MSG_ID_STATUSTEXT)
 	{
