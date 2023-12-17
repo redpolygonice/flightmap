@@ -53,20 +53,20 @@ bool TcpSocket::connect(const string &host)
 
 	if (!initAddress(false))
 	{
-		common::log("Socket::initAddress error");
+		LOGE("Socket::initAddress error!");
 		return false;
 	}
 
 	_socket = socket(_addrFamily, _type, _proto);
 	if (_socket == INVALID_SOCKET)
 	{
-		common::log("Socket::socket error");
+		LOGE("Socket::socket error!");
 		return false;
 	}
 
 	if (::connect(_socket, (struct sockaddr *)&_sockaddr, sizeof(_sockaddr)) == SOCKET_ERROR)
 	{
-		common::log("Socket::connect error");
+		LOGE("Socket::connect error!");
 		return false;
 	}
 
@@ -80,14 +80,14 @@ bool TcpSocket::listen(unsigned short port)
 
 	if (!initAddress(true))
 	{
-		common::log("Socket::initAddress error");
+		LOGE("Socket::initAddress error!");
 		return false;
 	}
 
 	_socket = socket(_addrFamily, _type, _proto);
 	if (_socket == INVALID_SOCKET)
 	{
-		common::log("Socket::socket error");
+		LOGE("Socket::socket error!");
 		return false;
 	}
 
@@ -98,19 +98,19 @@ bool TcpSocket::listen(unsigned short port)
 #endif
 	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == SOCKET_ERROR)
 	{
-		common::log("Socket::setsockopt SO_REUSEADDR error");
+		LOGE("Socket::setsockopt SO_REUSEADDR error!");
 		return false;
 	}
 
 	if (bind(_socket, (struct sockaddr *)&_sockaddr, sizeof(_sockaddr)) == SOCKET_ERROR)
 	{
-		common::log("Socket::bind error");
+		LOGE("Socket::bind error!");
 		return false;
 	}
 
 	if (::listen(_socket, 10) == SOCKET_ERROR)
 	{
-		common::log("Socket::listen error");
+		LOGE("Socket::listen error!");
 		return false;
 	}
 
@@ -134,7 +134,7 @@ void TcpSocket::run()
 		SOCKET socket = accept(_socket, (struct sockaddr *)&sockaddr, &addrlen);
 		if (socket == SOCKET_ERROR)
 		{
-			common::log("Socket::accept error");
+			LOGE("Socket::accept error!");
 			continue;
 		}
 
@@ -142,7 +142,7 @@ void TcpSocket::run()
 		const char on = 1;
 		if (setsockopt(socket, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) == SOCKET_ERROR)
 		{
-			common::log("Socket::setsockopt SO_KEEPALIVE error");
+			LOGE("Socket::setsockopt SO_KEEPALIVE error!");
 		}
 
 		// Set option SO_RCVTIMEO
@@ -151,7 +151,7 @@ void TcpSocket::run()
 		tv.tv_usec = 0;
 		if (setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, (const char *)&tv, sizeof(tv)) == SOCKET_ERROR)
 		{
-			common::log("Socket::setsockopt SO_SNDTIMEO error");
+			LOGE("Socket::setsockopt SO_SNDTIMEO error!");
 		}
 
 		_rsockets.push_back(socket);
@@ -197,7 +197,7 @@ int TcpSocket::read(char *buffer, size_t length)
 			// If error we guess it disconnected or broken socket
 			if (result == SOCKET_ERROR)
 			{
-				common::log("Read socket error");
+				LOGE("Read socket error!");
 				_rsockets.erase(std::remove(_rsockets.begin(), _rsockets.end(), socket), _rsockets.end());
 				closeSocket(socket);
 			}
@@ -207,7 +207,10 @@ int TcpSocket::read(char *buffer, size_t length)
 	{
 		result = recv(_socket, buffer, length, 0);
 		if (result == SOCKET_ERROR)
+		{
+			LOGE("Read socket error!");
 			return -1;
+		}
 	}
 
 	return result;
@@ -227,7 +230,7 @@ int TcpSocket::write(const char *buffer, size_t length)
 			// If error we guess it disconnected or broken socket
 			if (result == SOCKET_ERROR)
 			{
-				common::log("Write socket error");
+				LOGE("Write socket error!");
 				_rsockets.erase(std::remove(_rsockets.begin(), _rsockets.end(), socket), _rsockets.end());
 				closeSocket(socket);
 			}
@@ -237,7 +240,10 @@ int TcpSocket::write(const char *buffer, size_t length)
 	{
 		result = send(_socket, buffer, length, 0);
 		if (result == SOCKET_ERROR)
+		{
+			LOGE("Write socket error!");
 			return -1;
+		}
 	}
 
 	return result;

@@ -40,5 +40,7 @@
         <file>qml/HomePoint.qml</file>
         <file>qml/QuadroItem.qml</file>
         <file>qml/CameraDlg.qml</file>
+        <file>qml/SettingsDlg.qml</file>
+        <file>qml/SpinButton2.qml</file>
     </qresource>
 </RCC>

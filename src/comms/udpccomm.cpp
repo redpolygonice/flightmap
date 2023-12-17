@@ -55,12 +55,12 @@ void UdpcComm::Start(const ReadFunction &callback)
 
 void UdpcComm::run()
 {
-	uint8_t buffer[BUFFER_SIZE];
-	memset(buffer, 0, BUFFER_SIZE);
+	uint8_t buffer[UDP_BUFFER_SIZE];
+	memset(buffer, 0, UDP_BUFFER_SIZE);
 
 	while (_active)
 	{
-		int size = _socket->read(reinterpret_cast<char *>(buffer), BUFFER_SIZE);
+		int size = _socket->read(reinterpret_cast<char *>(buffer), UDP_BUFFER_SIZE);
 		if (size > 0)
 		{
 			if (_callback != nullptr)

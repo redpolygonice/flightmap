@@ -11,6 +11,7 @@
 #include <QGeoCoordinate>
 #include <QDataStream>
 #include <QFileInfo>
+#include <QFile>
 #include <mutex>
 
 namespace core
@@ -20,7 +21,7 @@ ProxyApp::ProxyApp(QObject *parent)
 	: _active(false)
 	, QObject(parent)
 	, _qmlObject(nullptr)
-	, _settings(common::Settings::instance())
+	, _settings(common::GetSettings())
 	, _telebox(nullptr)
 {
 }
@@ -139,6 +140,11 @@ QVariantMap ProxyApp::loadMissionFromFile(const QString &fileName)
 QString ProxyApp::imageLocation()
 {
 	return QString::fromStdString(Broker::instance()->ImageLocation());
+}
+
+bool ProxyApp::imageExists()
+{
+	return QFile::exists(imageLocation());
 }
 
 void ProxyApp::startCamera()
@@ -279,6 +285,12 @@ void ProxyApp::Init(QObject *object)
 	_parameters["missionStep"] = _settings->Get<int>("missionStep", 50);
 	_parameters["missionFilePath"] = _settings->Get<string>("missionFilePath").c_str();
 
+	// Camera parameters
+	_parameters["cameraWidth"] = _settings->Get<int>("cameraWidth", 640);
+	_parameters["cameraHeight"] = _settings->Get<int>("cameraHeight", 480);
+	_parameters["cameraQuality"] = _settings->Get<int>("cameraQuality", 50);
+	_parameters["cameraBrightness"] = _settings->Get<int>("cameraBrightness", 50);
+
 	// Widgets
 	common::AnyMap telemetryMap = _settings->GetWidget("telemetryWidget");
 	if (!telemetryMap.Empty())
@@ -346,6 +358,12 @@ void ProxyApp::saveParameters(const QVariantMap &params)
 	_settings->Set("missionVertStepCheck", params["missionVertStepCheck"].toBool());
 	_settings->Set("missionStep", params["missionStep"].toInt());
 
+	// Camera parameters
+	_settings->Set("cameraWidth", params["cameraWidth"].toInt());
+	_settings->Set("cameraHeight", params["cameraHeight"].toInt());
+	_settings->Set("cameraQuality", params["cameraQuality"].toInt());
+	_settings->Set("cameraBrightness", params["cameraBrightness"].toInt());
+
 	// Widgets
 	common::AnyMap telemetryMap;
 	VariantMapToAnyMap(params["telemetryWidget"].toMap(), telemetryMap);
@@ -364,6 +382,7 @@ void ProxyApp::saveParameters(const QVariantMap &params)
 	_settings->SetWidget("missionWidget", missionMap);
 
 	_settings->Save();
+	_parameters = params;
 }
 
 void ProxyApp::saveMap(const QString &provider, const QString &type)

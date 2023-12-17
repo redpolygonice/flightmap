@@ -51,20 +51,20 @@ bool UdpSocket::connect(const string &host)
 
 	if (!initAddress(false))
 	{
-		common::log("Socket::initAddress error");
+		LOGE("Socket::initAddress error!");
 		return false;
 	}
 
 	_socket = socket(_addrFamily, _type, _proto);
 	if (_socket == INVALID_SOCKET)
 	{
-		common::log("Socket::socket error");
+		LOGE("Socket::socket error!");
 		return false;
 	}
 
 	if (::connect(_socket, (struct sockaddr *)&_sockaddr, sizeof(_sockaddr)) == SOCKET_ERROR)
 	{
-		common::log("Socket::connect error");
+		LOGE("Socket::connect error!");
 		return false;
 	}
 
@@ -77,14 +77,14 @@ bool UdpSocket::listen(unsigned short port)
 
 	if (!initAddress(true))
 	{
-		common::log("Socket::initAddress error");
+		LOGE("Socket::initAddress error!");
 		return false;
 	}
 
 	_socket = socket(_addrFamily, _type, _proto);
 	if (_socket == INVALID_SOCKET)
 	{
-		common::log("Socket::socket error");
+		LOGE("Socket::socket error!");
 		return false;
 	}
 
@@ -95,13 +95,13 @@ bool UdpSocket::listen(unsigned short port)
 #endif
 	if (setsockopt(_socket, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) == SOCKET_ERROR)
 	{
-		common::log("Socket::setsockopt SO_REUSEADDR error");
+		LOGE("Socket::setsockopt SO_REUSEADDR error!");
 		return false;
 	}
 
 	if (bind(_socket, (struct sockaddr *)&_sockaddr, sizeof(_sockaddr)) == SOCKET_ERROR)
 	{
-		common::log("Socket::bind error");
+		LOGE("Socket::bind error!");
 		return false;
 	}
 
@@ -133,7 +133,10 @@ int UdpSocket::read(char *buffer, size_t length)
 #endif
 	int result = recvfrom(_socket, buffer, length, 0, (struct sockaddr *)&_sockaddr, &addrlen);
 	if (result == SOCKET_ERROR)
+	{
+		LOGE("Read socket error!");
 		return -1;
+	}
 
 	return result;
 }
@@ -144,7 +147,10 @@ int UdpSocket::write(const char *buffer, size_t length)
 
 	int result = sendto(_socket, buffer, length, 0, (const struct sockaddr *)&_sockaddr, sizeof(_sockaddr));
 	if (result == SOCKET_ERROR)
+	{
+		LOGE("Write socket error!");
 		return -1;
+	}
 
 	return result;
 }

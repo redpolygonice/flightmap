@@ -164,4 +164,12 @@ void Settings::Save()
 	writer->write(root, &ofs);
 }
 
+SettingsPtr GetSettings()
+{
+	static SettingsPtr settings = nullptr;
+	if (settings == nullptr)
+		settings.reset(new Settings());
+	return settings;
+}
+
 }

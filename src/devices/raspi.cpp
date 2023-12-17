@@ -2,6 +2,7 @@
 #include "common/log.h"
 #include "common/common.h"
 #include "messages/dispatcher.h"
+#include "common/settings.h"
 #include <cstdint>
 
 namespace device
@@ -72,14 +73,15 @@ bool Raspi::WaitHeartbeat()
 	}
 
 	return false;
-
-	//return true;
 }
 
 void Raspi::StartCamera()
 {
-	// Cmd, Width, Height, Quality, Brightness
-	SendCommand(MAV_CMD_VIDEO_START_CAPTURE, 640, 480, 70, 50);
+	int width = common::GetSettings()->Get<int>("cameraWidth", 640);
+	int height = common::GetSettings()->Get<int>("cameraHeight", 480);
+	int quality = common::GetSettings()->Get<int>("cameraQuality", 50);
+	int brightness = common::GetSettings()->Get<int>("cameraBrightness", 50);
+	SendCommand(MAV_CMD_VIDEO_START_CAPTURE, width, height, quality, brightness);
 	SetCamWork(true);
 }
 

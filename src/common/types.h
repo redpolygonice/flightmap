@@ -37,7 +37,8 @@ using std::wstring;
 #include <mavlink/common/mavlink.h>
 #include <mavlink/ardupilotmega/ardupilotmega.h>
 
-#define BUFFER_SIZE 1024
+#define BUFFER_SIZE 4096
+#define UDP_BUFFER_SIZE 24000
 #define MAX_BUFFER_SIZE 1024 * 1024
 
 // Path separator

@@ -537,17 +537,20 @@ bool Broker::PressControl()
 void Broker::CreateImagePath()
 {
 	string tmpDir;
+#ifdef WIN32
+	char *homeDir = getenv("USERPROFILE");
+#else
 	char *homeDir = getenv("HOME");
+#endif
 	if (homeDir == nullptr)
-		tmpDir = "/tmp";
+		tmpDir = "tmp";
 	else
-	{
 		tmpDir = string(homeDir) + PS + ".tmp";
-		if (!common::IsFileExists(tmpDir))
-			common::CreateDir(tmpDir);
-	}
 
-	_imagePath = tmpDir + PS + "img.jpg";
+	if (!common::IsFileExists(tmpDir))
+		common::CreateDir(tmpDir);
+
+	_imagePath =  tmpDir + PS + "camera.jpg";
 }
 
 }

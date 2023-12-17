@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 
 	common::Log::Create();
 	common::Log::SetVerb(common::Log::Level::Debug);
-	common::Settings::instance()->Load();
+	common::GetSettings()->Load();
 
 	core::Proxy()->Init();
 	qmlRegisterType<core::ProxyApp>("App.ProxyApp", 1, 0, "ProxyApp");
@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
 
 	// Start with map provider and type from settings
 	QVariantMap parameters;
-	parameters["provider"] = common::Settings::instance()->Get<string, common::commonT>("mapProvider").c_str();
-	parameters["mapType"] = common::Settings::instance()->Get<string, common::commonT>("mapType").c_str();
+	parameters["provider"] = common::GetSettings()->Get<string, common::commonT>("mapProvider").c_str();
+	parameters["mapType"] = common::GetSettings()->Get<string, common::commonT>("mapType").c_str();
 
 	if (parameters["provider"].toString().isEmpty() || parameters["mapType"].toString().isEmpty())
 	{

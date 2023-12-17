@@ -8,18 +8,19 @@ namespace onboard
 
 class Camera;
 using CameraPtr = std::shared_ptr<Camera>;
-using ImageReadyFunction = std::function<void()>;
+using ImageReadyFunction = std::function<void(const ByteArray &data)>;
 
 class Camera
 {
 private:
-	uint32_t _imageSize;
+	ImageReadyFunction _imageReadyFunc;
+	uint16_t _imageSize;
 	uint16_t _chunkCount;
 	uint16_t _chunkRemainder;
 	uint16_t _currentChunk;
 	ByteArray _imgData;
 	ByteArray _chunkData;
-	ImageReadyFunction _imageReady;
+	std::mutex _mutex;
 
 	bool _isImageMagic;
 	bool _isChunkMagic;
@@ -38,10 +39,12 @@ public:
 	void Init(uint16_t size = 0);
 	void SetSize(uint16_t size) { _imageSize = size; }
 	void ParseBytes(const ByteArray &buffer);
-	void ImageReady(const ImageReadyFunction &func) { _imageReady = func; }
+	void ParseChunkBytes(const ByteArray &buffer);
+	void ImageReady(const ImageReadyFunction &func) { _imageReadyFunc = func; }
 
 private:
 	void SaveImage();
+	void SendImage();
 };
 
 }

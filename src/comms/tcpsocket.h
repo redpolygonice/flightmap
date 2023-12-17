@@ -42,7 +42,7 @@ private:
 	struct sockaddr_in _rsockaddr;
 
 public:
-	TcpSocket(unsigned short port, int proto = IPPROTO_UDP, int type = SOCK_DGRAM, int addrFamily = AF_INET);
+	TcpSocket(unsigned short port, int proto = IPPROTO_TCP, int type = SOCK_STREAM, int addrFamily = AF_INET);
 	virtual ~TcpSocket();
 
 public:

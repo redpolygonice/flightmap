@@ -2,7 +2,6 @@
 #define SETTINGS_H
 
 #include "common/types.h"
-#include "common/singleton.h"
 #include "common/anymap.h"
 
 #include <type_traits>
@@ -36,22 +35,21 @@ typedef std::map<string, common::AnyMap>::iterator WidgetMapIterator;
 typedef std::map<string, common::AnyMap>::const_iterator WidgetMapConstIterator;
 
 // Application settings
-class Settings : public Singleton<Settings>
+class Settings
 {
-	friend class Singleton<Settings>;
-
 private:
 	DataMap _data;
 	WidgetMap _widgets;
 	std::mutex _mutex;
 
-private:
+public:
 	Settings();
 	void LoadDefaults();
 
 	Settings(const Settings &other) = delete;
 	Settings(const Settings &&other) = delete;
-	void operator= (const Settings &other) = delete;
+	Settings& operator=(const Settings&) = delete;
+	Settings& operator=(Settings&&) = delete;
 
 public:
 	bool Load();
@@ -120,6 +118,10 @@ public:
 		return AnyMap();
 	}
 };
+
+using SettingsPtr = std::shared_ptr<Settings>;
+
+SettingsPtr GetSettings();
 
 }
 

@@ -6,10 +6,12 @@ import QtQuick.Layouts 1.15
 Dialog {
 	visible: false
 	title: "Camera"
-	width: 400
-	height: 400
-	modality: "NonModal"
+	width: 600
+	height: 500
+	modality: Qt.NonModal
 	standardButtons: StandardButton.Close
+
+	property string imagePath: "file:///" + proxy.imageLocation()
 
 	onRejected: {
 		stopCamera()
@@ -18,7 +20,7 @@ Dialog {
 	onVisibleChanged: {
 		if (visible)
 		{
-			contentItem.ApplicationWindow.window.flags |= Qt.WindowStaysOnTopHint
+			contentItem.ApplicationWindow.window.flags |= Qt.Widget
 			startCamera()
 		}
 		else
@@ -41,8 +43,11 @@ Dialog {
 		repeat: true
 		running: false
 		onTriggered: {
-			imageId.source = "";
-			imageId.source = "file://" + proxy.imageLocation()
+			if (proxy.imageExists())
+			{
+				imageId.source = "";
+				imageId.source = imagePath
+			}
 		}
 	}
 

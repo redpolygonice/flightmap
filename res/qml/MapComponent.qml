@@ -58,32 +58,40 @@ Map {
 	TelemetryWidget {
 		id: telemetryWidgetId
 		visible: mainWindow.telemetryParams === null ? false : mainWindow.telemetryParams["visible"]
-		x: mainWindow.telemetryParams === null ? 10 : mainWindow.telemetryParams["x"]
-		y: mainWindow.telemetryParams === null ? 10 : mainWindow.telemetryParams["y"]
+		//x: mainWindow.telemetryParams === null ? 10 : mainWindow.telemetryParams["x"]
+		//y: mainWindow.telemetryParams === null ? 10 : mainWindow.telemetryParams["y"]
+		x: 10
+		y: 10
 		z: 2
 	}
 
 	HudWidget {
 		id: hudWidgetId
 		visible: mainWindow.hudParams === null ? false : mainWindow.hudParams["visible"]
-		x: mainWindow.hudParams === null ? 10 : mainWindow.hudParams["x"]
-		y:mainWindow.hudParams === null ? mapId.height - hudWidget.height - 10 : mainWindow.hudParams["y"]
+		//x: mainWindow.hudParams === null ? 10 : mainWindow.hudParams["x"]
+		//y:mainWindow.hudParams === null ? mapId.height - hudWidget.height - 10 : mainWindow.hudParams["y"]
+		x: 10
+		y: mapId.height - hudWidget.height - 10
 		z: 3
 	}
 
 	ControlWidget {
 		id: controlWidgetId
 		visible: mainWindow.controlParams === null ? false : mainWindow.controlParams["visible"]
-		x: mainWindow.controlParams === null ? mapId.width / 2 - width / 2 : mainWindow.controlParams["x"]
-		y: mainWindow.controlParams === null ? mapId.height - controlWidget.height - 10 : mainWindow.controlParams["y"]
+		//x: mainWindow.controlParams === null ? mapId.width / 2 - width / 2 : mainWindow.controlParams["x"]
+		//y: mainWindow.controlParams === null ? mapId.height - controlWidget.height - 10 : mainWindow.controlParams["y"]
+		x: mapId.width / 2 - width / 2
+		y: mapId.height - controlWidget.height - 10
 		z: 4
 	}
 
 	MissionWidget {
 		id: missionWidgetId
 		visible: mainWindow.missionParams === null ? false : mainWindow.missionParams["visible"]
-		x: mainWindow.missionParams === null ? mapId.width - width - 10 : mainWindow.missionParams["x"]
-		y: mainWindow.missionParams === null ? 10 : mainWindow.missionParams["y"]
+		//x: mainWindow.missionParams === null ? mapId.width - width - 10 : mainWindow.missionParams["x"]
+		//y: mainWindow.missionParams === null ? 10 : mainWindow.missionParams["y"]
+		x: mapId.width - width - 10
+		y: 10
 		z: 5
 	}
 
@@ -458,6 +466,7 @@ Map {
 		yellowLine.addCoordinate(QtPositioning.coordinate(points[points.length - 2]['lat'], points[points.length - 2]['lon'], points[points.length - 2]['alt']))
 		yellowLine.addCoordinate(QtPositioning.coordinate(points[0]['lat'], points[0]['lon'], points[0]['alt']))
 		yellowLine.addCoordinate(QtPositioning.coordinate(points[1]['lat'], points[1]['lon'], points[1]['alt']))
+		map.center = QtPositioning.coordinate(points[0]['lat'], points[0]['lon'], points[0]['alt'])
 	}
 
 	function drawMissionPolygon()
@@ -496,5 +505,7 @@ Map {
 
 			redLine.addCoordinate(QtPositioning.coordinate(point['lat'], point['lon'], point['alt']))
 		}
+
+		map.center = QtPositioning.coordinate(points[0]['lat'], points[0]['lon'], points[0]['alt'])
 	}
 }

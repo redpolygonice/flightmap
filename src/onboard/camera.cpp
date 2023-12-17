@@ -5,7 +5,8 @@ namespace onboard
 {
 
 Camera::Camera()
-	: _imageSize(0)
+	: _imageReadyFunc(nullptr)
+	, _imageSize(0)
 	, _chunkCount(0)
 	, _chunkRemainder(0)
 	, _currentChunk(0)
@@ -31,6 +32,48 @@ void Camera::Init(uint16_t size)
 }
 
 void Camera::ParseBytes(const ByteArray &buffer)
+{
+	//LOGD("Buffer size: " << buffer.size());
+	int i = 0;
+	while (i < buffer.size())
+	{
+		// Detect image magic number
+		if (i + 1 < buffer.size() && _isImageMagic == false)
+		{
+			if (buffer[i] == kImageMagic1 && buffer[i + 1] == kImageMagic2)
+			{
+				_isImageMagic = true;
+				i += 2;
+			}
+		}
+
+		// Compute image size
+		if (_isImageMagic == true && _imageSize == 0)
+		{
+			if (i + 1 < buffer.size())
+			{
+				memcpy(&_imageSize, &buffer[i], 2);
+				_imgData.reserve(_imageSize);
+				i += 2;
+			}
+		}
+
+		// Apend data
+		if (i < buffer.size() && _imageSize > 0)
+		{
+			_imgData.push_back(buffer[i]);
+			if (_imgData.size() >= _imageSize)
+			{
+				SaveImage();
+				Init();
+			}
+		}
+
+		++i;
+	}
+}
+
+void Camera::ParseChunkBytes(const ByteArray &buffer)
 {
 	int i = 0;
 	while (i < buffer.size())
@@ -109,8 +152,14 @@ void Camera::SaveImage()
 	if (fp == nullptr)
 		return;
 
-	fwrite((void*)_imgData.data(), _imgData.size(), 1, fp);
+	fwrite(_imgData.data(), 1, _imgData.size(), fp);
 	fclose(fp);
+}
+
+void Camera::SendImage()
+{
+	if (_imageReadyFunc != nullptr)
+		_imageReadyFunc(_imgData);
 }
 
 }

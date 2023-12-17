@@ -32,7 +32,7 @@ class ProxyApp : public QObject
 private:
 	std::atomic_bool _active;
 	QObject *_qmlObject;
-	common::Settings *_settings;
+	common::SettingsPtr _settings;
 	data::TeleBoxPtr _telebox;
 
 	QStringList _protocols;
@@ -96,6 +96,7 @@ public slots:
 	Q_INVOKABLE void saveMissionToFile(const QString &fileName, const QVariantMap &params);
 	Q_INVOKABLE QVariantMap loadMissionFromFile(const QString &fileName);
 	Q_INVOKABLE QString imageLocation();
+	Q_INVOKABLE bool imageExists();
 	Q_INVOKABLE void startCamera();
 	Q_INVOKABLE void stopCamera();
 

@@ -7,6 +7,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <dirent.h>
+#include <regex>
 
 #ifdef WIN32
 #include <windows.h>
@@ -238,6 +239,12 @@ StringList SplitString(const std::string &text, const std::string &separator)
 
 	delete szTemp;
 	return list;
+}
+
+bool replace(std::string &str, const std::string &from, const std::string &to)
+{
+	str = std::regex_replace(str, std::regex(from), to);
+	return true;
 }
 
 }

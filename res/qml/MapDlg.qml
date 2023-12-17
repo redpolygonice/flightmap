@@ -1,31 +1,19 @@
 import QtQuick 2.0
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs 1.2
+import QtQuick.Dialogs 1.3
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 import QtQml.Models 2.15
 import QtLocation 5.6
 import QtQuick.Controls.Styles 1.4
-import QtQuick.Layouts 1.15
 
 Dialog {
 	visible: false
 	title: "Maps"
-	width: 330
-	height: 400
+	width: 370
+	height: 450
+	font.pixelSize: 14
 
 	standardButtons: StandardButton.Ok | StandardButton.Cancel
-
-	onVisibleChanged: {
-		if (visible)
-			contentItem.ApplicationWindow.window.flags |= Qt.WindowStaysOnTopHint
-	}
-	modality: "NonModal"
-
-//	MapSliders {
-//		id: sliders
-//		z: mainWindow.map.z + 3
-//		mapSource: mainWindow.map
-//		edge: Qt.LeftEdge
-//	}
 
 	Plugin {
 		id: mapPlugin
@@ -54,6 +42,7 @@ Dialog {
 		border.color: "#aaaaaa"
 		radius: 3
 
+
 		ListModel {
 			id: listModel
 		}
@@ -63,12 +52,12 @@ Dialog {
 
 			Item {
 				width: listView.width
-				height: 20
+				height: 22
 
 				RowLayout {
 					Layout.alignment: Qt.AlignVCenter
-					Text { text: '<b> ' + provider + '</b>:'; color: "black"; Layout.alignment: Qt.AlignVCenter }
-					Text { text: type; color: "dimgrey"; Layout.alignment: Qt.AlignVCenter}
+					Text { text: '<b> ' + provider + '</b>:'; color: "black"; Layout.alignment: Qt.AlignVCenter; font.pixelSize: 14 }
+					Text { text: type; color: "dimgrey"; Layout.alignment: Qt.AlignVCenter; font.pixelSize: 14}
 				}
 
 				MouseArea {

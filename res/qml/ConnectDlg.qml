@@ -1,29 +1,25 @@
-import QtQuick 2.3
-import QtQuick.Controls 1.2
-import QtQuick.Dialogs 1.2
+import QtQuick 2.0
+import QtQuick.Dialogs 1.3
+import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 
 Dialog {
 	visible: false
 	title: "Connection"
-	width: 200
-	height: 250
+	width: 250
+	height: 300
+	font.pixelSize: 14
 
-	property int retcode: 0
+	standardButtons: StandardButton.Ok | StandardButton.Cancel
+
 	property string protocol: ""
 	property string device: ""
-	property string host: ""
-	property int port: 0
-	property int baudrate: 0
+	property alias host: hostText.text
+	property alias port: portText.text
+	property alias baudrate: baudrateText.text
 
 	Component.onCompleted: {
-		protocolComboBox.model = proxy.protocols
-		deviceComboBox.model = proxy.devices
-		protocol = proxy.connection["protocol"]
-		device = proxy.connection["device"]
-		host = proxy.connection["host"]
-		port = proxy.connection["port"]
-		baudrate = proxy.connection["baudrate"]
-		update()
+		load()
 	}
 
 	Grid {
@@ -35,14 +31,15 @@ Dialog {
 		anchors.margins: 10
 
 		Text {
-			id: text1
-			text: qsTr("Protocol")
-			font.pixelSize: 12
+			text: "Protocol"
+			font.pixelSize: 14
 		}
 
 		ComboBox {
 			id: protocolComboBox
-			width: 100
+			width: 110
+			font.pixelSize: 14
+			implicitHeight: 25
 			onCurrentIndexChanged: {
 				if (currentIndex == 3)
 				{
@@ -69,77 +66,84 @@ Dialog {
 		}
 
 		Text {
-			id: text2
-			text: qsTr("Device")
-			font.pixelSize: 12
+			text: "Device"
+			font.pixelSize: 14
 		}
 
 		ComboBox {
 			id: deviceComboBox
-			width: 100
+			width: 110
+			font.pixelSize: 14
+			implicitHeight: 25
 		}
 
 		Text {
-			id: text3
-			text: qsTr("Host")
-			font.pixelSize: 12
+			text: "Host"
+			font.pixelSize: 14
 		}
 
 		TextField {
 			id: hostText
 			text: host
+			width: 110
+			font.pixelSize: 14
+			implicitHeight: 25
 		}
 
 		Text {
-			id: text4
-			text: qsTr("Port")
-			font.pixelSize: 12
+			text: "Port"
+			font.pixelSize: 14
 		}
 
 		TextField {
 			id: portText
 			text: port
+			width: 110
+			font.pixelSize: 14
+			implicitHeight: 25
 		}
 
 		Text {
-			id: text5
-			text: qsTr("Baudrate")
-			font.pixelSize: 12
+			text: "Baudrate"
+			font.pixelSize: 14
 		}
 
 		TextField {
 			id: baudrateText
 			text: baudrate
+			width: 110
+			font.pixelSize: 14
+			implicitHeight: 25
 		}
 	}
 
-	standardButtons: StandardButton.Ok | StandardButton.Cancel
-
 	onAccepted: {
-		retcode = 1
-		protocol = protocolComboBox.currentText
-		device = deviceComboBox.currentText
-		host = hostText.text
-		port = portText.text
-		baudrate = baudrateText.text
-
-		proxy.connection = { "protocol": protocol, "device": device, "host": host,
-			"port": port, "baudrate": baudrate }
-		proxy.connect()
+		save()
 	}
 
-	onRejected: {
-		retcode = 0
-	}
-
-	function update()
+	function load()
 	{
+		protocolComboBox.model = proxy.protocols
+		deviceComboBox.model = proxy.devices
+		protocol = proxy.connection["protocol"]
+		device = proxy.connection["device"]
+		host = proxy.connection["host"]
+		port = proxy.connection["port"]
+		baudrate = proxy.connection["baudrate"]
+
 		var index = protocolComboBox.find(protocol)
 		protocolComboBox.currentIndex = index === -1 ? 0 : index
 		index = deviceComboBox.find(device)
 		deviceComboBox.currentIndex = index === -1 ? 0 : index
-		hostText.text = host
-		portText.text = port
-		baudrateText.text = baudrate
+	}
+
+	function save()
+	{
+		protocol = protocolComboBox.currentText
+		device = deviceComboBox.currentText
+
+		proxy.connection = { "protocol": protocol, "device": device, "host": host,
+							"port": port, "baudrate": baudrate }
+		proxy.connect()
 	}
 }
